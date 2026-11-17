@@ -1,0 +1,31 @@
+name = "Fractura"
+uuid = "5b3f6c1e-8d2a-4e7b-9c41-2f0a7d6e9b13"
+authors = ["Cristóbal Castellanos"]
+version = "0.1.0"
+
+[deps]
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+NLPModels = "a4795742-8479-5a88-8948-cc11e1c8c1a6"
+NLPModelsIpopt = "f4238b75-b362-5c4c-b852-0801c9a21d71"
+OrdinaryDiffEqVerner = "79d7bb75-1356-48c1-b8c0-6832512096c2"
+PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+QuadGK = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[compat]
+JSON = "=1.9.0"
+LinearAlgebra = "1.11.0"
+NLPModels = "=0.21.12"
+NLPModelsIpopt = "=0.11.3"
+OrdinaryDiffEqVerner = "=1.14.0"
+PrecompileTools = "1.2.1"
+Printf = "1.11.0"
+QuadGK = "=2.11.3"
+Random = "1.11.0"
+StaticArrays = "=1.9.22"
+Test = "1.11.0"
+julia = "1.11"

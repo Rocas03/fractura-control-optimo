@@ -1,0 +1,112 @@
+{
+  "J_disparo": 0.37186199976645734,
+  "acuerdo_en_J": {
+    "J_directo_N400": 0.37186213551298325,
+    "J_disparo": 0.37186199976645734,
+    "J_hjb_lazo_cerrado_fino": 0.37191401956527065,
+    "max_diferencia_relativa": 0.00013989006364182905,
+    "tolerancia": 0.0005,
+    "tolerancia_fijada_en": "sesión del 14-nov, después de la sonda de costo; no viene del plan"
+  },
+  "criterios": {
+    "brechas_directo_bajan": true,
+    "brechas_hjb_bajan": true,
+    "disparo_converge": true,
+    "orden_directo_cerca_de_2": true,
+    "sup_dU_directo_baja": true,
+    "sup_dU_hjb_baja": true,
+    "tres_metodos_coinciden_en_J": true
+  },
+  "directo": [
+    {
+      "J": 0.3718706880094631,
+      "N": 50,
+      "brecha": 8.688243005761098e-6,
+      "orden": null,
+      "razon": null,
+      "sup_dU": 4.855717046448049e-5
+    },
+    {
+      "J": 0.37186417173795466,
+      "N": 100,
+      "brecha": 2.1719714973222892e-6,
+      "orden": 2.0000592843082377,
+      "razon": 4.0001643743817,
+      "sup_dU": 1.2139235239239099e-5
+    },
+    {
+      "J": 0.3718625427537919,
+      "N": 200,
+      "brecha": 5.42987334539724e-7,
+      "orden": 2.000014718921614,
+      "razon": 4.000040809724249,
+      "sup_dU": 3.034501213194929e-6
+    },
+    {
+      "J": 0.37186213551298325,
+      "N": 400,
+      "brecha": 1.3574652590886416e-7,
+      "orden": 2.0000032704657773,
+      "razon": 4.0000090676668085,
+      "sup_dU": 7.580487972891348e-7
+    }
+  ],
+  "disparo": {
+    "H_oscilacion": 2.4424906541753444e-15,
+    "exito": true,
+    "norma_residuo": 3.552713678800501e-15,
+    "z0": [
+      0.8160879127307685,
+      0.43455602264693355
+    ]
+  },
+  "hjb": [
+    {
+      "J_lc": 0.3727889092464753,
+      "brecha": 0.0009269094800179456,
+      "nP": 41,
+      "n_controles": 21,
+      "nl": 41,
+      "nt": 10,
+      "orden": null,
+      "razon": null,
+      "sup_dU": 0.2015587601643724
+    },
+    {
+      "J_lc": 0.3720210255152881,
+      "brecha": 0.0001590257488307545,
+      "nP": 81,
+      "n_controles": 41,
+      "nl": 81,
+      "nt": 20,
+      "orden": 2.543168075248544,
+      "razon": 5.828675461886507,
+      "sup_dU": 0.10155876016437243
+    },
+    {
+      "J_lc": 0.37191401956527065,
+      "brecha": 5.201979881330754e-5,
+      "nP": 161,
+      "n_controles": 81,
+      "nl": 161,
+      "nt": 40,
+      "orden": 1.6121276552151689,
+      "razon": 3.057023526782134,
+      "sup_dU": 0.051558760164372386
+    }
+  ],
+  "parametros_base": {
+    "Ld": 1.7,
+    "P0": 0.3,
+    "Pref": 0.0,
+    "T": 2.0,
+    "c": 1.0,
+    "ell0": 1.0,
+    "eta": 0.2,
+    "n": 2.0,
+    "qmax": 2.0,
+    "wT": 10.0,
+    "wp": 1.0,
+    "wq": 0.2
+  }
+}

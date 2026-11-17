@@ -1,0 +1,359 @@
+{
+  "control": {
+    "con_defecto": {
+      "J": 2.846895690135986e-8,
+      "J0": 0.008946571598835006,
+      "J_cerrado": 3.2802186335424754e-27,
+      "barra": {
+        "L": 1.0,
+        "N": 60,
+        "ancho": 0.1,
+        "defecto": 0.4,
+        "ell": 0.25,
+        "fija_borde": true
+      },
+      "blancos": [
+        0.02,
+        0.04,
+        0.06,
+        0.08,
+        0.1,
+        0.12
+      ],
+      "carga_cerrada": [
+        0.3795964693950964,
+        0.5393607803773648,
+        0.6637264378002783,
+        0.7700915527595953,
+        0.8651628170071035,
+        0.9523597715092365
+      ],
+      "carga_descenso": [
+        0.37758973051770756,
+        0.5401172278901009,
+        0.6635525975676972,
+        0.7700730393508752,
+        0.8651229634884006,
+        0.9523167782215936
+      ],
+      "congelados": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "distancia_al_cerrado_pct": 0.5286505642654323,
+      "error_cerrado": 6.157574450327274e-14,
+      "error_descenso": 0.0002089677030927932,
+      "kkt": 1.0547118733938987e-15,
+      "lambda_cerrada": [
+        0.01999999999999849,
+        0.04000000000000628,
+        0.06000000000002691,
+        0.08000000000003807,
+        0.09999999999997647,
+        0.12000000000006157
+      ],
+      "lambda_descenso": [
+        0.019791032296907207,
+        0.040110187944480395,
+        0.05996944935996831,
+        0.07999629633395951,
+        0.0999912135826989,
+        0.11998976428407226
+      ],
+      "pasos": 301,
+      "relativo_descenso": 0.0017413975257732767
+    },
+    "homogenea": {
+      "J": 3.851232547921708e-6,
+      "J0": 0.06552184269254963,
+      "J_cerrado": 1.8238842212832e-26,
+      "barra": {
+        "L": 1.0,
+        "N": 32,
+        "ancho": 0.15,
+        "defecto": 0.0,
+        "ell": 0.3,
+        "fija_borde": false
+      },
+      "blancos": [
+        0.06,
+        0.124,
+        0.188,
+        0.252,
+        0.316,
+        0.38
+      ],
+      "carga_cerrada": [
+        0.46126560401430133,
+        0.6869073479869481,
+        0.8784969997980633,
+        1.0597144202126252,
+        1.2409516564493672,
+        1.429339271372812
+      ],
+      "carga_descenso": [
+        0.4601520639344855,
+        0.6848534551746079,
+        0.8754854102131692,
+        1.0559818333371502,
+        1.2367198994452075,
+        1.4248699884898834
+      ],
+      "congelados": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "distancia_al_cerrado_pct": 0.3522257321671656,
+      "error_cerrado": 1.388056336537602e-13,
+      "error_descenso": 0.0014748006052226481,
+      "kkt": 1.790234627208065e-15,
+      "lambda_cerrada": [
+        0.05999999999996706,
+        0.12400000000001635,
+        0.1880000000001388,
+        0.2520000000000284,
+        0.31599999999988737,
+        0.38000000000004863
+      ],
+      "lambda_descenso": [
+        0.05972793979024586,
+        0.12335090642072544,
+        0.18695380286362923,
+        0.2506721225850972,
+        0.31452519939477735,
+        0.37852544848813885
+      ],
+      "pasos": 301,
+      "relativo_descenso": 0.0038810542242701264
+    }
+  },
+  "criterios": {
+    "donde_el_conjunto_activo_no_cambia_el_mismo_codigo_concuerda": true,
+    "el_adjunto_no_es_ninguna_de_las_dos_laterales": true,
+    "el_conjunto_activo_del_optimo_solo_tiene_los_nodos_pinchados": true,
+    "el_costo_baja_monotono_y_la_carga_sale_monotona": true,
+    "el_descenso_queda_bajo_el_5pct_del_blanco_en_las_dos_barras": true,
+    "el_gradiente_adjunto_concuerda_con_diferencias_finitas_bajo_1e5": true,
+    "el_optimo_cerrado_alcanza_el_blanco_bajo_1e10": true,
+    "el_orden_de_convergencia_en_malla_es_al_menos_085": true,
+    "el_residuo_kkt_de_todos_los_forward_queda_bajo_1e10": true,
+    "la_invariancia_de_escala_pasa_1e9": true,
+    "la_rama_homogenea_reproduce_la_cerrada_bajo_1e9": true,
+    "la_razon_de_las_laterales_no_se_mueve_1pct_al_bajar_tau_100x": true,
+    "las_derivadas_laterales_difieren_mas_de_3x": true,
+    "mutacion_sin_el_raiz_de_ell_los_picos_difieren_mas_de_20pct": true,
+    "mutacion_sin_el_termino_de_rango_uno_el_gradiente_cambia_de_signo": true
+  },
+  "escala": {
+    "ell_a": 0.25,
+    "ell_b": 0.5,
+    "pico_a": 0.7709673876969527,
+    "pico_b": 0.5451562679141935,
+    "relativo": 4.320116683307322e-16,
+    "sin_raiz": 0.29289321881345226
+  },
+  "gradiente": {
+    "J": 0.01481453317913977,
+    "congelados": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "errores_relativos": [
+      2.756830388972453e-10,
+      6.361235149743294e-11,
+      5.472669930076113e-11
+    ],
+    "mutacion_sin_rango_uno": {
+      "adjunto": -0.05691778018512002,
+      "fd": 0.021716952920434896,
+      "mismo_signo": false
+    }
+  },
+  "homogenea": {
+    "barra": {
+      "L": 1.0,
+      "N": 40,
+      "ell": 1.0
+    },
+    "con_ell_de_la_figura": {
+      "N": 40,
+      "ell": 0.25,
+      "salta_a_dano_total_en_epsc": 1.3,
+      "ultima_eps_que_calza_en_epsc": 1.25
+    },
+    "constante_del_pico": 0.3247595264191645,
+    "error_alpha": 9.853229343548264e-14,
+    "error_pico": 3.059647296556959e-14,
+    "error_sigma": 9.89763826453327e-14,
+    "escaneo": {
+      "desde": 0.2,
+      "etapas": 47,
+      "hasta": 2.5,
+      "unidad": "epsilon_c"
+    },
+    "rango_en_epsc": [
+      0.2,
+      0.5,
+      0.8,
+      1.0,
+      1.4
+    ],
+    "salta_a_dano_total_en_epsc": 2.4,
+    "ultima_eps_que_calza_en_epsc": 2.35
+  },
+  "kkt_por_etapas": {
+    "1": 1.637651467342391e-14,
+    "10": 1.4210854715202004e-14,
+    "2": 1.54957969199232e-14,
+    "3": 1.6564159576295048e-14,
+    "5": 1.4210854715202004e-14
+  },
+  "lectura": {
+    "adjunto_en_el_quiebre": 0.0045738877403440365,
+    "adjunto_relativo_al_promedio": 0.8111021369616644,
+    "deficit_pct_con_blanco_terminal_con_defecto": 0.0002128535883549887,
+    "deficit_pct_con_blanco_terminal_homogenea": 0.00010795657505724421,
+    "distancia_del_descenso_al_programa_cerrado_pct_con_defecto": 0.5286505642654323,
+    "distancia_del_descenso_al_programa_cerrado_pct_homogenea": 0.3522257321671656,
+    "error_del_seguimiento_pct_con_defecto": 0.17413975257732767,
+    "error_del_seguimiento_pct_homogenea": 0.3881054224270126,
+    "factor_de_bajada_del_costo_con_defecto": 314257.09167474485,
+    "factor_entre_las_derivadas_laterales": 32.07512763265429,
+    "gradiente_error_relativo_maximo": 2.756830388972453e-10,
+    "kkt_de_la_rampa_de_30_etapas_peor_malla": 2.2737367544323206e-13,
+    "kkt_misma_barra_cinco_etapas": 1.4210854715202004e-14,
+    "kkt_misma_barra_diez_etapas": 1.4210854715202004e-14,
+    "kkt_misma_barra_dos_etapas": 1.54957969199232e-14,
+    "kkt_misma_barra_tres_etapas": 1.6564159576295048e-14,
+    "kkt_si_una_sola_etapa_salta_a_09_epsc": 1.637651467342391e-14,
+    "la_rama_homogenea_calza_hasta_epsc": 2.35,
+    "nodos_congelados_en_la_etapa_que_sostiene": 22,
+    "nodos_de_la_barra_del_quiebre": 41,
+    "orden_observado_en_malla": 1.997681603893215,
+    "pasos_del_descenso_con_blanco_terminal": [
+      13,
+      12
+    ],
+    "pico_de_ruptura_malla_fina": 0.7708975075339197,
+    "pico_homogeneo_mismo_ell": 0.649519052838329,
+    "promedio_de_las_laterales": 0.005639102071013548,
+    "razones_de_las_diferencias": [
+      3.9935772031670953,
+      3.99838308592387
+    ],
+    "salta_a_dano_total_en_epsc": 2.4,
+    "separacion_del_adjunto_a_la_lateral_mas_cercana": 2.3912203658919253,
+    "sin_el_raiz_de_ell_los_picos_difieren_pct": 29.289321881345227
+  },
+  "malla": {
+    "N": [
+      40,
+      80,
+      160,
+      320
+    ],
+    "ancho": 0.1,
+    "defecto": 0.4,
+    "diferencias": [
+      0.0002232394055884379,
+      5.5899609355591906e-5,
+      1.3980553677406249e-5
+    ],
+    "ell": 0.25,
+    "ordenes": [
+      1.997681603893215,
+      1.9994167036197457
+    ],
+    "picos": [
+      0.7711906271025412,
+      0.7709673876969527,
+      0.7709114880875971,
+      0.7708975075339197
+    ],
+    "razones": [
+      3.9935772031670953,
+      3.99838308592387
+    ]
+  },
+  "modelo": {
+    "adjunto": "discreto, hacia atrás, conjunto activo congelado; Hessiano reducido con el término de rango uno de la eliminación de u",
+    "energia": "AT2: w(α) = α², degradación (1-α)², c_w = 2",
+    "forward": "minimización alternada; paso en u cerrado (σ constante), paso en α QP convexo con cotas por conjunto activo",
+    "irreversibilidad": "cota inferior nodo por nodo, α ≥ α de la etapa anterior",
+    "rampa": {
+      "desde": 0.1,
+      "etapas": 30,
+      "hasta": 1.3,
+      "unidad": "epsilon_c * L"
+    }
+  },
+  "quiebre": {
+    "adjunto": 0.0045738877403440365,
+    "carga": [
+      0.4,
+      0.6,
+      0.8,
+      0.8,
+      0.9
+    ],
+    "congelados": [
+      0,
+      0,
+      0,
+      22,
+      0
+    ],
+    "control_limpio": {
+      "adjunto": -2.1773943161837797e-5,
+      "congelados": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "error_relativo": 2.4119183871131175e-10,
+      "fd": -2.1773701969999086e-5
+    },
+    "deriva_de_la_razon": 0.0001305035525027698,
+    "objetivo": 0.25,
+    "omega": 0.2,
+    "taus": [
+      {
+        "centrada": 0.00563907918538854,
+        "derecha": 0.0003409860876740026,
+        "izquierda": 0.010937172283103078,
+        "razon": 32.07512763265429,
+        "tau_relativo": 1.0e-5
+      },
+      {
+        "centrada": 0.00563909884051314,
+        "derecha": 0.0003410252747841284,
+        "izquierda": 0.010937172406242153,
+        "razon": 32.071442250623406,
+        "tau_relativo": 1.0e-6
+      },
+      {
+        "centrada": 0.005639102071013548,
+        "derecha": 0.00034103062601303956,
+        "izquierda": 0.010937173516014058,
+        "razon": 32.07094226075715,
+        "tau_relativo": 1.0e-7
+      }
+    ]
+  }
+}

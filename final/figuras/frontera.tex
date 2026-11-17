@@ -1,0 +1,105 @@
+% Escrito por el paquete Fractura (src/figuras.jl). No editar a mano.
+\definecolor{C0}{HTML}{1F77B4}\definecolor{C1}{HTML}{FF7F0E}\definecolor{C2}{HTML}{2CA02C}%
+\definecolor{rojo}{HTML}{D62728}\definecolor{gris40}{gray}{0.4}\definecolor{gris30}{gray}{0.3}%
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1, horizontal sep=46.0pt}, scale only axis, axis line style={line width=0.8pt}, tick style={black, line width=0.8pt}, tick align=outside, major tick length=3.5pt, xtick pos=lower, ytick pos=left, grid=major, grid style={black!31, opacity=0.25, line width=0.8pt}, label style={font=\footnotesize}, tick label style={font=\scriptsize}, legend style={font=\scriptsize, draw=none, fill=none}, legend cell align=left, /pgf/number format/use comma, /pgf/number format/1000 sep={}, scaled ticks=false, enlarge x limits=0.05, enlarge y limits=0.05, xlabel={$\tau$}, width=152.0pt, height=122.0pt]
+\nextgroupplot[xlabel={costo de control $J$}, ylabel={cota relativa [\%]}, ymode=log, enlarge x limits=0.08, enlarge y limits=false, ymin=0.15, ymax=250, ytick={0.3,1,3,10,30,100}, yticklabels={0{,}3,1,3,10,30,100}, legend style={at={(0.98,0.74)}, anchor=north east, font=\tiny, draw=none, fill=none, column sep=5pt}, legend columns=2]
+\addplot[C0, dashed, line width=1.0pt, mark=*, mark size=1.5pt, mark options={solid}] table[row sep=\\] {x y\\
+0.372202 3.638\\
+0.372468 2.80138\\
+0.37348 2.2621\\
+0.377856 1.763\\
+0.394835 1.37564\\
+0.467397 0.945175\\
+0.553345 0.805615\\
+0.576824 0.817486\\
+0.584901 0.819392\\
+};
+\addlegendentry{$n$}
+\addplot[C2, dotted, line width=1.0pt, mark=*, mark size=1.5pt, mark options={solid}] table[row sep=\\] {x y\\
+0.372202 1.14957\\
+0.372468 0.946311\\
+0.37348 0.83785\\
+0.377856 0.742163\\
+0.394835 0.628681\\
+0.467397 0.496923\\
+0.553345 0.459785\\
+0.576824 0.456078\\
+0.584901 0.458069\\
+};
+\addlegendentry{$c$}
+\addplot[black, solid, line width=1.8pt, mark=*, mark size=1.5pt, mark options={solid}] table[row sep=\\] {x y\\
+0.372202 21.7304\\
+0.372468 16.6568\\
+0.37348 13.3817\\
+0.377856 10.4227\\
+0.394835 8.39794\\
+0.467397 6.14418\\
+0.553345 5.25755\\
+0.576824 5.23358\\
+0.584901 5.21353\\
+};
+\addlegendentry{$\eta$}
+\addplot[C1, dashdotted, line width=1.0pt, mark=*, mark size=1.5pt, mark options={solid}] table[row sep=\\] {x y\\
+0.372202 0.400872\\
+0.372468 0.387989\\
+0.37348 0.37569\\
+0.377856 0.347112\\
+0.394835 0.293017\\
+0.467397 0.230771\\
+0.553345 0.216499\\
+0.576824 0.217578\\
+0.584901 0.217896\\
+};
+\addlegendentry{$P_0$}
+\addplot[black, mark=square, mark size=3pt, line width=0.9pt, forget plot, only marks] table[row sep=\\] {x y\\
+0.394835 8.39794\\
+};
+\addplot[rojo, mark=o, mark size=3pt, line width=0.9pt, forget plot, only marks] table[row sep=\\] {x y\\
+0.553345 5.25755\\
+};
+\node[anchor=north west, align=left, font=\tiny, inner sep=1pt] at (rel axis cs:0.015,0.985) {$\gamma=0$, a la izquierda: el óptimo de control puro\\
+$\square$ codo $\gamma=0{,}03$: $+6$\,\% de $J$ y $\eta$ 2{,}6$\times$ mejor\\
+extremo $\gamma=3$: $+57$\,\% de $J$ y 4{,}2$\times$\\
+{\color{rojo}$\circ$} $\gamma=0{,}3$: iterado, no óptimo};
+\nextgroupplot[ylabel={caudal $U$}, enlarge y limits=false, ymin=-0.08, ymax=2.3, enlarge x limits=0.03, xtick={0,1,2}, legend style={at={(0.02,0.98)}, anchor=north west, font=\scriptsize, draw=none, fill=none}]
+\addplot[black, solid, line width=1.6pt, no marks, const plot] table[row sep=\\] {x y\\
+0 1.06322\\
+0.25 0.990676\\
+0.5 0.890151\\
+0.75 0.764621\\
+1 0.617774\\
+1.25 0.453828\\
+1.5 0.277383\\
+1.75 0.0933158\\
+2 0.0933158\\
+};
+\addlegendentry{$\gamma=0$: control puro}
+\addplot[C0, dashed, line width=1.1pt, no marks, const plot] table[row sep=\\] {x y\\
+0 0.524763\\
+0.25 0.849279\\
+0.5 1.01637\\
+0.75 1.21615\\
+1 1.18923\\
+1.25 0.447966\\
+1.5 0\\
+1.75 0\\
+2 0\\
+};
+\addlegendentry{$\gamma=0{,}03$: el codo}
+\addplot[C1, dashdotted, line width=1.1pt, no marks, const plot] table[row sep=\\] {x y\\
+0 0\\
+0.25 0\\
+0.5 0\\
+0.75 2\\
+1 2\\
+1.25 2\\
+1.5 0\\
+1.75 0\\
+2 0\\
+};
+\addlegendentry{$\gamma=3$: diseño}
+\draw[gris40, dotted, line width=0.8pt] ({rel axis cs:0,0} |- {axis cs:0,2.0}) -- ({rel axis cs:1,0} |- {axis cs:0,2.0});
+\node[anchor=north east, xshift=-2pt, yshift=-2pt, font=\scriptsize, text=gris30] at (axis cs:2.0,2.0) {$q_{\max}$};
+\end{groupplot}
+\end{tikzpicture}%

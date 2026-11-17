@@ -1,0 +1,118 @@
+{
+  "adimensionalizacion_error": 1.249000902703301e-16,
+  "alcance": "Comprobaciones de identidades y casos sintéticos. Sin calibración, optimización completa, HJB ni certificación global.",
+  "apagado_sin_filtracion": {
+    "L_final": 1.7282837809008091,
+    "error_S_constante": 6.217248937900877e-15,
+    "residuo_solucion_implicita": 5.242473122279989e-13
+  },
+  "control_negativo_n1": {
+    "estado_final": [
+      0.9975067604161376,
+      -0.049875026885961606
+    ],
+    "q": -1.0,
+    "tiempo": 0.1
+  },
+  "coordenadas_y_balance": {
+    "error_max_balance": 4.752864768420295e-13,
+    "error_max_estados": 2.48245868306185e-13,
+    "estado_final": [
+      1.4629451658769057,
+      0.4884313610233691
+    ]
+  },
+  "gradiente_adjunto": {
+    "derivada": -0.516624289524571,
+    "diferencias": [
+      {
+        "diferencia_centrada": -0.5166168769472845,
+        "eps": 0.01,
+        "error": 7.412577286425304e-6
+      },
+      {
+        "diferencia_centrada": -0.5166242153795131,
+        "eps": 0.001,
+        "error": 7.414505787117776e-8
+      },
+      {
+        "diferencia_centrada": -0.51662428882715,
+        "eps": 0.0001,
+        "error": 6.974210098320555e-10
+      }
+    ]
+  },
+  "gramianos_reposo_n1": {
+    "controlabilidad": [
+      0.07496942506358248,
+      0.9125013019278851
+    ],
+    "observabilidad": [
+      0.0,
+      1.648399769821804
+    ]
+  },
+  "gramianos_reposo_n2": {
+    "controlabilidad": [
+      0.0,
+      0.4120999424554509
+    ],
+    "observabilidad": [
+      0.0,
+      1.6483997698218036
+    ]
+  },
+  "gramianos_trayectoria_presurizada": {
+    "controlabilidad": [
+      0.03756574165292,
+      0.30099126346459293
+    ],
+    "observabilidad": [
+      0.05739878834434433,
+      0.6970605657795508
+    ]
+  },
+  "identidades_numericas_bigfloat": {
+    "HJB_minimizacion": true,
+    "PMP_estacionariedad": true,
+    "balance_almacenamiento": true,
+    "jacobiano_F_L": true,
+    "jacobiano_F_p": true,
+    "jacobiano_h_L": true,
+    "jacobiano_h_p": true,
+    "kalman_congelado": true,
+    "metodo": "numérico: 20 puntos al azar, BigFloat de 256 bits, derivadas por paso complejo; no es una verificación simbólica"
+  },
+  "jacobiano_paso_complejo_error_max": 1.7763568394002505e-15,
+  "linealizacion": [
+    {
+      "eps": 0.04,
+      "error": 3.556917613722239e-5,
+      "error_div_eps2": 0.022230735085763995
+    },
+    {
+      "eps": 0.02,
+      "error": 8.950911102140513e-6,
+      "error_div_eps2": 0.02237727775535128
+    },
+    {
+      "eps": 0.01,
+      "error": 2.245126400705286e-6,
+      "error_div_eps2": 0.02245126400705286
+    },
+    {
+      "eps": 0.005,
+      "error": 5.622109208785766e-7,
+      "error_div_eps2": 0.022488436835143063
+    }
+  ],
+  "versions": {
+    "JSON": "1.9.0",
+    "NLPModels": "0.21.12",
+    "NLPModelsIpopt": "0.11.3",
+    "OrdinaryDiffEqVerner": "1.14.0",
+    "QuadGK": "2.11.3",
+    "StaticArrays": "1.9.22",
+    "julia": "1.11.4"
+  }
+}

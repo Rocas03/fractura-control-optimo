@@ -1,0 +1,579 @@
+{
+  "N_tramos": 50,
+  "barrido_condicionamiento": [
+    {
+      "T": 0.5,
+      "cond_M": 148.3186790713544,
+      "cond_W": 49.4703717372626,
+      "eta": 0.0,
+      "lambda_M": [
+        0.0027195312737843457,
+        0.40335728622093203
+      ],
+      "lambda_W": [
+        0.0018034562948923377,
+        0.08921765332023024
+      ]
+    },
+    {
+      "T": 0.5,
+      "cond_M": 114.04652530639073,
+      "cond_W": 45.496405638453275,
+      "eta": 0.2,
+      "lambda_M": [
+        0.0033699997810376983,
+        0.3843367653106471
+      ],
+      "lambda_W": [
+        0.0018498340846900233,
+        0.08416080188089423
+      ]
+    },
+    {
+      "T": 0.5,
+      "cond_M": 81.31303374027264,
+      "cond_W": 40.598618104022556,
+      "eta": 0.5,
+      "lambda_M": [
+        0.00441117157852773,
+        0.3586857433989571
+      ],
+      "lambda_W": [
+        0.0019066448730898657,
+        0.07740714706256802
+      ]
+    },
+    {
+      "T": 0.5,
+      "cond_M": 51.72170282029214,
+      "cond_W": 34.59755074753846,
+      "eta": 1.0,
+      "lambda_M": [
+        0.0062316970529857465,
+        0.3223139830406191
+      ],
+      "lambda_W": [
+        0.001966432593441647,
+        0.06803375144321105
+      ]
+    },
+    {
+      "T": 1.0,
+      "cond_M": 30.991161066106816,
+      "cond_W": 7.543450228271838,
+      "eta": 0.0,
+      "lambda_M": [
+        0.018688303906755604,
+        0.5791722364266162
+      ],
+      "lambda_W": [
+        0.01647729985835443,
+        0.12429569137780724
+      ]
+    },
+    {
+      "T": 1.0,
+      "cond_M": 23.761547780244744,
+      "cond_W": 6.750219592745651,
+      "eta": 0.2,
+      "lambda_M": [
+        0.022464960330352366,
+        0.5338022282709705
+      ],
+      "lambda_W": [
+        0.016623055932941347,
+        0.11220927784984752
+      ]
+    },
+    {
+      "T": 1.0,
+      "cond_M": 16.94417282787864,
+      "cond_W": 5.813529851564723,
+      "eta": 0.5,
+      "lambda_M": [
+        0.028192233135355835,
+        0.4776940706493161
+      ],
+      "lambda_W": [
+        0.01671008508521159,
+        0.09714457846506402
+      ]
+    },
+    {
+      "T": 1.0,
+      "cond_M": 10.902660877288607,
+      "cond_W": 4.71669445698386,
+      "eta": 1.0,
+      "lambda_M": [
+        0.03733885139341315,
+        0.4070928342898587
+      ],
+      "lambda_W": [
+        0.016563226509023445,
+        0.07812367866487901
+      ]
+    },
+    {
+      "T": 1.5,
+      "cond_M": 13.943642024993343,
+      "cond_W": 7.13696750480475,
+      "eta": 0.0,
+      "lambda_M": [
+        0.04461029565922395,
+        0.6220299933013331
+      ],
+      "lambda_W": [
+        0.029158724605047762,
+        0.2081048699877766
+      ]
+    },
+    {
+      "T": 1.5,
+      "cond_M": 11.073274303815491,
+      "cond_W": 6.46756572525551,
+      "eta": 0.2,
+      "lambda_M": [
+        0.0511342527947883,
+        0.5662236075173348
+      ],
+      "lambda_W": [
+        0.02856651193044113,
+        0.18475579345142368
+      ]
+    },
+    {
+      "T": 1.5,
+      "cond_M": 8.277307741809732,
+      "cond_W": 5.627570813501473,
+      "eta": 0.5,
+      "lambda_M": [
+        0.060387389457865114,
+        0.4998450062672663
+      ],
+      "lambda_W": [
+        0.027695344947459972,
+        0.15585751489618122
+      ]
+    },
+    {
+      "T": 1.5,
+      "cond_M": 5.695467669840194,
+      "cond_W": 4.542820858057951,
+      "eta": 1.0,
+      "lambda_M": [
+        0.07377436353285617,
+        0.4201795023644197
+      ],
+      "lambda_W": [
+        0.026345440391937258,
+        0.11968261612721501
+      ]
+    },
+    {
+      "T": 2.0,
+      "cond_M": 9.517279398471986,
+      "cond_W": 11.507376849061352,
+      "eta": 0.0,
+      "lambda_M": [
+        0.06611029862035532,
+        0.6291901830863387
+      ],
+      "lambda_W": [
+        0.030425477972847424,
+        0.35011744084637053
+      ]
+    },
+    {
+      "T": 2.0,
+      "cond_M": 7.848926846897212,
+      "cond_W": 10.094283810049381,
+      "eta": 0.2,
+      "lambda_M": [
+        0.07278592880683635,
+        0.571291430688327
+      ],
+      "lambda_W": [
+        0.03008223632527797,
+        0.3036586311083328
+      ]
+    },
+    {
+      "T": 2.0,
+      "cond_M": 6.139554014882393,
+      "cond_W": 8.400447245482683,
+      "eta": 0.5,
+      "lambda_M": [
+        0.0819316196146643,
+        0.5030236041510292
+      ],
+      "lambda_W": [
+        0.02951560813560716,
+        0.2479443090615074
+      ]
+    },
+    {
+      "T": 2.0,
+      "cond_M": 4.465295028957209,
+      "cond_W": 6.359601598904674,
+      "eta": 1.0,
+      "lambda_M": [
+        0.09448589453398146,
+        0.42190739516916254
+      ],
+      "lambda_W": [
+        0.028517224110369895,
+        0.1813581840486313
+      ]
+    }
+  ],
+  "contraste_semilla": {
+    "error_rel_maximo": 1.6812939929167214e-14,
+    "metodo": "la semilla integra la EDO de Lyapunov W' = AW + WA' + BB' y ∫X'C'CX junto al estado; acá es cuadratura de Gauss–Kronrod sobre el propagador Ψ(s) = Φ(T,s) y Φ(s,0). Son dos caminos distintos, no la misma cuenta dos veces.",
+    "reposo_n1": {
+      "controlabilidad_cuadratura": [
+        0.07496942506357954,
+        0.9125013019278707
+      ],
+      "controlabilidad_semilla": [
+        0.07496942506358248,
+        0.9125013019278851
+      ],
+      "error_rel_controlabilidad": 1.4432899320127035e-14,
+      "error_rel_observabilidad": 9.025109565251478e-15,
+      "n": 1.0,
+      "observabilidad_cuadratura": [
+        0.0,
+        1.648399769821819
+      ],
+      "observabilidad_semilla": [
+        0.0,
+        1.648399769821804
+      ]
+    },
+    "reposo_n2": {
+      "controlabilidad_cuadratura": [
+        0.0,
+        0.4120999424554557
+      ],
+      "controlabilidad_semilla": [
+        0.0,
+        0.4120999424554509
+      ],
+      "error_rel_controlabilidad": 4.829470157119431e-15,
+      "error_rel_observabilidad": 7.408672031176589e-15,
+      "n": 2.0,
+      "observabilidad_cuadratura": [
+        0.0,
+        1.6483997698218158
+      ],
+      "observabilidad_semilla": [
+        0.0,
+        1.6483997698218036
+      ]
+    },
+    "trayectoria_presurizada": {
+      "controlabilidad_cuadratura": [
+        0.037565741652936815,
+        0.3009912634646016
+      ],
+      "controlabilidad_semilla": [
+        0.03756574165292,
+        0.30099126346459293
+      ],
+      "error_rel_controlabilidad": 1.6812939929167214e-14,
+      "error_rel_observabilidad": 1.3877787807814457e-14,
+      "n": 2.0,
+      "observabilidad_cuadratura": [
+        0.057398788344342984,
+        0.6970605657795647
+      ],
+      "observabilidad_semilla": [
+        0.05739878834434433,
+        0.6970605657795508
+      ]
+    }
+  },
+  "criterios": {
+    "LQ_reduce_la_desviacion_factor_3": true,
+    "M_simetrica_definida_positiva": true,
+    "W_simetrica_definida_positiva": true,
+    "degeneracion_en_reposo_rango_1": true,
+    "energia_igual_a_la_cuadratura_del_control": true,
+    "energia_minima_alcanza_el_blanco": true,
+    "energia_y_forma_cuadratica_identidad_no_cruce": true,
+    "gramianos_contra_la_semilla": true,
+    "los_gramianos_de_la_nominal_coinciden_por_lyapunov": true,
+    "perturbacion_nula_reproduce_la_nominal": true,
+    "riccati_condicion_de_borde_exacta": true,
+    "riccati_definida_positiva_antes_de_T": true,
+    "riccati_residual_de_su_edo": true,
+    "riccati_semidefinida_positiva": true
+  },
+  "criterios_retirados": {
+    "riccati_definida_positiva": {
+      "cumplido": false,
+      "fijado_en": "plan 2026-11-14, F1 tarea 1.4 paso 1",
+      "razon": "Imposible con los pesos del problema, y por estructura del costo, no por el código: Qf = ∂²Φ = diag(w_T, 0) no penaliza la presión, así que P(T) = Qf es singular por diseño. Medido: λ_min(P(t)) > 0 para t < T, decayendo linealmente (9,99e-4 en t = 1,999), λ_min(P(T)) = 0 y max|P(T) − Qf| = 0,0 exacto. Con Q = Qf = I, donde la pregunta sí tiene sentido, P sí es definida positiva: lo prueba el testset «1.4 Riccati» de test/pruebas.jl.",
+      "reemplazado_por": [
+        "riccati_semidefinida_positiva",
+        "riccati_definida_positiva_antes_de_T",
+        "riccati_condicion_de_borde_exacta",
+        "riccati_residual_de_su_edo"
+      ]
+    }
+  },
+  "cruce_lyapunov_en_la_nominal": {
+    "error_rel_controlabilidad": 2.6828317345461983e-11,
+    "error_rel_maximo": 2.6828317345461983e-11,
+    "error_rel_observabilidad": 1.3466228132585911e-11,
+    "lambda_M_lyapunov": [
+      0.07278592882030258,
+      0.5712914306882206
+    ],
+    "lambda_W_lyapunov": [
+      0.030082236325206166,
+      0.3036586311351611
+    ],
+    "metodo": "W' = AW + WA' + BB' con W(0) = 0 y -V' = A'V + VA + C'C con V(T) = 0, integradas sobre la nominal del óptimo; sin propagador y sin cuadratura. El acuerdo es tres órdenes peor que en las tres trayectorias suaves de la semilla. Atribución medida aparte, que este script NO calcula (está en docs/marco/ataque-s5/CRUCE-LYAPUNOV-MEDIDO.md): el origen es que A(τ) es discontinua en los nudos del control, pero el mecanismo no es que un paso pise un salto —poner tstops en los 49 nudos recupera 6,1x de los 644x, y los mismos 49 tstops sobre una nominal suave compran 9,6x por sí solos—, sino el número de pasos (1533 contra 27 en la suave), y es artefacto de tolerancia (apretar reltol de 1e-12 a 1e-14 baja la cifra 57x). Escala e interpolante del estado quedan refutados. El mecanismo se apoya en dos indicios indirectos, no en una cuenta del error local por paso.",
+    "procedencia_de_la_tolerancia": "heredada de TOL_SEMILLA, fijada antes para el contraste con la semilla; no se eligió viendo este número",
+    "tolerancia": 1.0e-8
+  },
+  "degeneracion": {
+    "P_min_en_la_nominal": 0.3,
+    "degenerada_en_la_nominal": false,
+    "kalman_rango_min": 2,
+    "kalman_razon_sv_min": 0.34955421389097374,
+    "lectura": "Sobre la nominal del óptimo no hay degeneración (P > 0 en todo el horizonte): controlabilidad y observabilidad uniformes, con cota σ₂/σ₁ ≥ 0.34955421389097374 y 0.01862166317351332. La degeneración existe y vive en P = 0, donde el rango cae a 1 en los dos tests: en reposo ℓ no se controla ni se observa.",
+    "n_reposo": 2.0,
+    "observabilidad_rango_min": 2,
+    "observabilidad_razon_sv_min": 0.01862166317351332,
+    "reposo_kalman_rango": 1,
+    "reposo_kalman_razon_sv": 0.0,
+    "reposo_observabilidad_rango": 1,
+    "reposo_observabilidad_razon_sv": 0.0
+  },
+  "energia_minima": {
+    "energia": 0.017957515588823546,
+    "energia_por_cuadratura": 0.01795751558882116,
+    "forma_cuadratica_zWz": 0.017957515588823546,
+    "z_T": [
+      0.013,
+      -0.021
+    ],
+    "z_T_alcanzado": [
+      0.013000000002674735,
+      -0.020999999998663647
+    ]
+  },
+  "gramiano_controlabilidad": {
+    "W": [
+      [
+        0.293908876859388,
+        0.050717303847230236
+      ],
+      [
+        0.050717303847230236,
+        0.03983199057422278
+      ]
+    ],
+    "cond": 10.094283810049381,
+    "lambda": [
+      0.03008223632527797,
+      0.3036586311083328
+    ]
+  },
+  "gramiano_observabilidad": {
+    "C": [
+      0.0,
+      1.0
+    ],
+    "M": [
+      [
+        0.12445407379972928,
+        -0.15194491549229644
+      ],
+      [
+        -0.15194491549229644,
+        0.519623285695434
+      ]
+    ],
+    "cond": 7.848926846897212,
+    "lambda": [
+      0.07278592880683635,
+      0.571291430688327
+    ],
+    "lectura": "C = [0 1]: se mide solo la presión en el pozo."
+  },
+  "lq_seguimiento": {
+    "P_0": [
+      [
+        0.9380041260144257,
+        0.6370413872400807
+      ],
+      [
+        0.6370413872400807,
+        1.1157858076765508
+      ]
+    ],
+    "Q": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        1.0
+      ]
+    ],
+    "Qf": [
+      [
+        10.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ]
+    ],
+    "R": 0.2,
+    "borde_max_abs_P_T_menos_Qf": 0.0,
+    "experimento": {
+      "P0": {
+        "J_LQ": 0.3471772795768907,
+        "J_lazo_abierto": 0.36946030968400984,
+        "U_LQ_max": 0.9211995238229156,
+        "U_LQ_min": 0.011836171336007489,
+        "desviacion_terminal_LQ": 0.004584896228202906,
+        "desviacion_terminal_lazo_abierto": 0.06949362625987399,
+        "ell_T_LQ": 1.6363626887950578,
+        "ell_T_lazo_abierto": 1.7012714188267288,
+        "error_a_ell_d_LQ": 0.0636373112049422,
+        "error_a_ell_d_lazo_abierto": 0.0012714188267288762,
+        "error_a_ell_d_nominal": 0.06822220743314511,
+        "factor": 15.157077238171796,
+        "perturbacion_relativa": 0.2,
+        "recorte_activo": false
+      },
+      "eta": {
+        "J_LQ": 0.3779014695521531,
+        "J_lazo_abierto": 0.3788227653451751,
+        "U_LQ_max": 1.0835382853026994,
+        "U_LQ_min": 0.014917118005965228,
+        "desviacion_terminal_LQ": 0.004684993171427676,
+        "desviacion_terminal_lazo_abierto": 0.015402363117064333,
+        "ell_T_LQ": 1.6270927993954272,
+        "ell_T_lazo_abierto": 1.6163754294497905,
+        "error_a_ell_d_LQ": 0.07290720060457279,
+        "error_a_ell_d_lazo_abierto": 0.08362457055020944,
+        "error_a_ell_d_nominal": 0.06822220743314511,
+        "factor": 3.2875956385590017,
+        "perturbacion_relativa": 0.2,
+        "recorte_activo": false
+      }
+    },
+    "lambda_P_0": [
+      0.3836816968949844,
+      1.670108236795992
+    ],
+    "lambda_min_en_la_grilla": [
+      0.3836816968949844,
+      0.3592056638233249,
+      0.3372455376532863,
+      0.317860584999136,
+      0.3009961572412202,
+      0.2866382475525621,
+      0.27466189610296987,
+      0.2649947771078805,
+      0.2574442116216398,
+      0.25185874932659913,
+      0.2479336842656274,
+      0.24534552054728104,
+      0.24351159954200188,
+      0.24164587603412077,
+      0.2384108954354649,
+      0.23180377114728676,
+      0.21864441893312517,
+      0.1943787102720397,
+      0.15306609971215185,
+      0.08892761281585215,
+      0.0
+    ],
+    "pesos": "segunda variación del costo original (Gauss–Newton): Qf = ∂²Φ, Q = ∂²L, R = w_q",
+    "residual_edo_max": 3.0985267684968676e-9
+  },
+  "nominal": {
+    "J": 0.3718706880094631,
+    "P_T": 0.4455343602900701,
+    "cotas_fijadas": 0,
+    "ell_T": 1.6317777925668548,
+    "exito_ipopt": true,
+    "iteraciones": 17,
+    "q": [
+      1.0829411455264444,
+      1.0753566029147963,
+      1.0669905563095632,
+      1.0578492113428823,
+      1.0479393777817858,
+      1.0372684683634537,
+      1.0258444963664712,
+      1.0136760717334479,
+      1.0007723955892205,
+      0.9871432530372553,
+      0.9727990041630487,
+      0.9577505732251693,
+      0.9420094360692872,
+      0.9255876058552414,
+      0.9084976172388322,
+      0.8907525091957768,
+      0.8723658067127417,
+      0.8533515015976525,
+      0.8337240326774724,
+      0.8134982656559809,
+      0.7926894728970516,
+      0.7713133133817398,
+      0.7493858130615901,
+      0.7269233457981157,
+      0.7039426150414483,
+      0.6804606363620272,
+      0.6564947209099227,
+      0.6320624598387955,
+      0.6071817096970701,
+      0.5818705787586992,
+      0.5561474142406433,
+      0.5300307903341591,
+      0.5035394969621931,
+      0.4766925291653657,
+      0.44950907701371035,
+      0.4220085159399511,
+      0.3942103973920061,
+      0.36613443970690523,
+      0.33780051911481696,
+      0.30922866078975036,
+      0.28043902987224617,
+      0.2514519223985648,
+      0.2222877560801461,
+      0.19296706088621648,
+      0.1635104693912084,
+      0.13393870685727813,
+      0.10427258103161272,
+      0.07453297165430249,
+      0.044740819744582924,
+      0.014917118005965228
+    ],
+    "status": "first_order"
+  },
+  "parametros": {
+    "Ld": 1.7,
+    "P0": 0.3,
+    "Pref": 0.0,
+    "T": 2.0,
+    "c": 1.0,
+    "ell0": 1.0,
+    "eta": 0.2,
+    "n": 2.0,
+    "qmax": 2.0,
+    "wT": 10.0,
+    "wp": 1.0,
+    "wq": 0.2
+  }
+}

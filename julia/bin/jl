@@ -1,0 +1,16 @@
+#!/bin/sh
+# julia/bin/jl — invoca Julia 1.11.4, la versión a la que está pineado el Manifest de este paquete.
+#
+# Por qué existe: el `julia` del PATH es 1.13.3 (juliaup, canal 1.13). Al resolver este proyecto
+# con 1.13 contra `Manifest.toml` (julia_version = "1.11.4") sale a julialang-s3.julialang.org, que
+# el sandbox corta, y la corrida muere sin llegar a correr nada. Con el binario 1.11.4 las 280
+# pruebas pasan en 16,4 s sin red (medido el 14-nov-2026).
+#
+# Se puede apuntar a otro binario con JULIA_BIN, para cuando juliaup mueva la ruta.
+JULIA_BIN="${JULIA_BIN:-$HOME/.julia/juliaup/julia-1.11.4+0.aarch64.apple.darwin14/bin/julia}"
+if [ ! -x "$JULIA_BIN" ]; then
+  echo "jl: no está o no es ejecutable: $JULIA_BIN" >&2
+  echo "jl: mide las versiones instaladas con 'juliaup status' y pasa la ruta en JULIA_BIN" >&2
+  exit 2
+fi
+exec "$JULIA_BIN" "$@"
