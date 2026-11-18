@@ -35,6 +35,20 @@ julia --project=julia julia/test/runtests.jl
 pásala en la variable `JULIA_BIN`. `final/regenerar.sh` regenera los json y las figuras de `final/` y además
 necesita `latexmk`, `xelatex` y `pdfinfo`.
 
+## Referencias
+
+Las del informe final (`final/informe/secciones/referencias.tex`); el póster cita [1], [2], [5], [7] y [8].
+
+1. B. K. Atkinson, Subcritical crack growth in geological materials, *Journal of Geophysical Research: Solid Earth* 89(B6):4077–4114, 1984, doi:[10.1029/JB089iB06p04077](https://doi.org/10.1029/JB089iB06p04077).
+2. B. Bourdin, G. A. Francfort, J.-J. Marigo, *The Variational Approach to Fracture*, Springer, 2008, doi:[10.1007/978-1-4020-6395-4](https://doi.org/10.1007/978-1-4020-6395-4).
+3. B. Bourdin, A. Peirce, *Modeling seismicity induced by hydraulic fracturing in the El Teniente copper mine*, documento de trabajo no publicado, 20 de diciembre de 2018.
+4. E. Detournay, Propagation regimes of fluid-driven fractures in impermeable rocks, *International Journal of Geomechanics* 4(1):35–45, 2004, doi:[10.1061/(ASCE)1532-3641(2004)4:1(35)](https://doi.org/10.1061/(ASCE)1532-3641(2004)4:1(35)).
+5. J. Geertsma, F. de Klerk, A rapid method of predicting width and extent of hydraulically induced fractures, *Journal of Petroleum Technology* 21(12):1571–1581, 1969, doi:[10.2118/2458-PA](https://doi.org/10.2118/2458-PA).
+6. Q. Gu, K. A. Hoo, Model-based closed-loop control of the hydraulic fracturing process, *Industrial & Engineering Chemistry Research* 54(5):1585–1594, 2015, doi:[10.1021/ie5024782](https://doi.org/10.1021/ie5024782).
+7. I. Neitzel, T. Wick, W. Wollner, An optimal control problem governed by a regularized phase-field fracture propagation model, *SIAM Journal on Control and Optimization* 55(4):2271–2288, 2017, doi:[10.1137/16M1062375](https://doi.org/10.1137/16M1062375).
+8. E. Trélat, *Contrôle optimal: théorie & applications*, Vuibert, Collection Mathématiques Concrètes, 2005.
+9. Y. Navidtehrani, C. Betegón, J. Vallejos, E. Martínez-Pañeda, A phase field model for hydraulic fracture: Drucker–Prager driving force and a hybrid coupling strategy, *Computer Methods in Applied Mechanics and Engineering* 444:118155, 2025, doi:[10.1016/j.cma.2025.118155](https://doi.org/10.1016/j.cma.2025.118155).
+
 ## Licencia
 
 MIT, ver [`LICENSE`](LICENSE).
