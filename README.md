@@ -10,6 +10,27 @@ linealizado, el principio de Pontryagin, la ecuación de Hamilton-Jacobi-Bellman
 método directo y uno de disparo, un problema de control sobre un modelo phase-field AT2 y un diseño de
 experimento basado en la matriz de Fisher.
 
+## Si llegaste por el QR del póster
+
+- **Póster:** [`entrega/poster-MA4703-Castellanos-Ibarra.pdf`](entrega/poster-MA4703-Castellanos-Ibarra.pdf) (A0, la versión entregada)
+- **Informe final:** [`entrega/informe-final.pdf`](entrega/informe-final.pdf), con las demostraciones, las cifras y lo que queda abierto
+- **Referencias:** al final de esta página
+
+**El resultado en una línea:** inyectar al inicio. Una rampa decreciente de caudal queda a 0,11 % del costo del
+extremal de Pontryagin; la mejor inyección constante, a 6,7 %, y a igual volumen una constante cuesta 22 % más.
+
+| Bloque del póster | Dónde está en el código (`julia/src/`) |
+|---|---|
+| Dinámica (C1) | `modelo.jl`, `integrador.jl`, `objetivo1.jl` |
+| Control LQ (C2) | `objetivo2.jl` |
+| Pontryagin (C3) | `objetivo3.jl`, `disparo.jl` (disparo sobre el sistema de PMP), `directo.jl` (método directo con Ipopt) |
+| HJB y acuerdo de métodos (C4) | `hjb.jl`, `objetivo4.jl`, `acuerdo.jl` (directo, disparo y HJB: diferencia relativa máxima 1,4 · 10⁻⁴) |
+| Phase-field AT2 (C5) | `at2.jl`, `at2_adjunto.jl`, `objetivo5.jl` (descenso proyectado a 0,53 % del óptimo cerrado) |
+| Diseño de Fisher | `sensibilidad.jl`, `fisher.jl`, `diseno.jl` (la cota de η baja 2,6 veces pagando +6 % de costo) |
+
+Todas las cifras del póster y del informe las escribe el código: `julia/regenerar_final.jl` produce los json de
+`final/resultados/` y las figuras de `final/figuras/`.
+
 ## Qué hay
 
 | Ruta | Qué es |
@@ -19,8 +40,7 @@ experimento basado en la matriz de Fisher.
 | `final/resultados/`, `final/figuras/` | Resultados (json) y figuras (pgfplots) del informe final, escritos por `julia/regenerar_final.jl` |
 | `avance/resultados/` | Resultados de la etapa de avance; las pruebas y `cifras_informe.jl` los leen como referencia |
 | `semilla/` | Comprobaciones de lectura del modelo, escritas por `julia/regenerar.jl` |
-
-El informe final y el póster se agregan después de su entrega.
+| `entrega/` | Los PDF entregados: el póster A0 y el informe final |
 
 ## Cómo correr las pruebas
 
