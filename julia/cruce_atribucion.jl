@@ -79,7 +79,10 @@ function cruce_atribucion()
         "e_max" => Dict("optimo" => A.emax, "optimo_tstops" => B.emax, "suave" => D.emax,
                         "suave_tstops" => E.emax, "optimo_reltol_menos_catorce" => A14.emax,
                         "misma_ley_estado_vern" => V.emax),
-        "pasos" => Dict("optimo" => A.pasos, "suave" => D.pasos),
+        # Pasos del propagador Ψ (no de las EDO de Lyapunov). Con tstops y a reltol 1e-14 se guardan desde el 19-nov
+        # (juez B1/M1): con nudos el óptimo BAJA de pasos, así que su ganancia no es refinamiento.
+        "pasos" => Dict("optimo" => A.pasos, "suave" => D.pasos, "optimo_tstops" => B.pasos,
+                        "suave_tstops" => E.pasos, "optimo_reltol_menos_catorce" => A14.pasos),
         "razon" => Dict("brecha_optimo_suave" => A.emax / D.emax,
                         "ganancia_tstops_optimo" => A.emax / B.emax,
                         "ganancia_tstops_suave" => D.emax / E.emax,

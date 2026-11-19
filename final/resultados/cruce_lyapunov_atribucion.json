@@ -16,7 +16,10 @@
   "n_nudos_interiores": 49,
   "pasos": {
     "optimo": 1533,
-    "suave": 27
+    "optimo_reltol_menos_catorce": 2607,
+    "optimo_tstops": 1020,
+    "suave": 27,
+    "suave_tstops": 168
   },
   "razon": {
     "brecha_optimo_suave": 644.3946666666667,

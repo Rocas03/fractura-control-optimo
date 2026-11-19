@@ -500,7 +500,7 @@ function panel_forzada_obj1(io, d)
     # El umbral no es un recuadro de texto: es una trayectoria más, la única que termina SOBRE la línea
     # ℓd. Dibujarla es lo que convierte «hay umbral» en algo que se ve.
     curva(io, "rojo-", d.umbral.ℓ, d.umbral.P; ancho = 1.3)
-    print(io, "\\addlegendentry{\$U^*=", dec(d.Ustar, 3), "\$: \$\\ell(T)=\\ell_d\$}\n")
+    print(io, "\\addlegendentry{\$U_{\\mathrm{c}}=", dec(d.Ustar, 3), "\$: \$\\ell(T)=\\ell_d\$}\n")
     marca_suelta(io, d.umbral.ellT, d.umbral.PT, "rojo, mark=*, mark size=1.5pt, forget plot")
     linea_objetivo(io, d.p.ℓd)
 end
