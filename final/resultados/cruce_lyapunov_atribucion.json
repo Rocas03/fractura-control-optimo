@@ -1,0 +1,28 @@
+{
+  "e_max": {
+    "misma_ley_estado_vern": 1.723998721558928e-11,
+    "optimo": 2.6828317345461983e-11,
+    "optimo_reltol_menos_catorce": 4.744815651491763e-13,
+    "optimo_tstops": 4.4215742178721484e-12,
+    "suave": 4.163336342344337e-14,
+    "suave_tstops": 4.3298697960381105e-15
+  },
+  "escala": {
+    "diferencia_pct": 0.8861943742247247,
+    "lambda_max_W_optimo": 0.3036586311083328,
+    "lambda_max_W_suave": 0.3009912634646016
+  },
+  "metodo": "Cruce de Lyapunov contra cuadratura del propagador (el de cruce_lyapunov_en_la_nominal), con Vern9 a mano para fijar tolerancias y tstops. optimo = nominal del óptimo (RK4-Hermite, N_OBJ2 tramos); suave = trayectoria_presurizada de la semilla; tstops en los nudos interiores (en la suave, nudos arbitrarios equiespaciados, control negativo). El caso optimo/reltol 1e-12 reproduce bit a bit el error_rel_maximo de objetivo2_lineal.json (exigido).",
+  "n_nudos_interiores": 49,
+  "pasos": {
+    "optimo": 1533,
+    "suave": 27
+  },
+  "razon": {
+    "brecha_optimo_suave": 644.3946666666667,
+    "factor_estado": 1.5561680533731743,
+    "ganancia_reltol": 56.54238081310324,
+    "ganancia_tstops_optimo": 6.067594034048109,
+    "ganancia_tstops_suave": 9.615384615384615
+  }
+}

@@ -1141,9 +1141,9 @@ end
 @testset "cifras del informe: cobertura, nombres y una cifra contra su json" begin
     c, fuera = cifras_informe(; detalle = true)
     @test length(c) > 0
-    @test length(c) == 368                      # 357 de los cuatro json de final/ + 11 del bloque `borde`
+    @test length(c) == 385                      # 374 de los cinco json de final/ + 11 del bloque `borde`
                                                 # de avance/resultados/objetivo4_hjb.json (H14), 15-nov
-    @test length(fuera) == 70                   # strings, booleanos, nulos y vectores de más de 4 componentes
+    @test length(fuera) == 71                   # strings, booleanos, nulos y vectores de más de 4 componentes
     nombres = first.(c)
     @test allunique(nombres)
     @test all(n -> occursin(r"^[A-Za-z]+$", n), nombres)   # \newcommand no acepta dígitos ni guiones

@@ -22,9 +22,11 @@
 # La unicidad del nombre se EXIGE: dos rutas distintas que den el mismo nombre son error, no silencio.
 const CIFRAS_FINAL = joinpath(RAIZ, "final", "informe", "cifras-final.tex")
 
-# Los cuatro json de la entrega final, cada uno con su prefijo de macro.
+# Los cinco json de la entrega final, cada uno con su prefijo de macro. El quinto, `cruce_lyapunov_atribucion`,
+# lo escribe julia/cruce_atribucion.jl (19-nov): la atribución del cruce de Lyapunov del §4.4, que antes vivía
+# tipeada a mano desde docs/marco/ataque-s5/.
 const JSON_INFORME = (("objetivo2_lineal", "dos"), ("acuerdo_tres_metodos", "acu"),
-                      ("diseno_fisher", "fis"), ("objetivo5_at2", "atf"))
+                      ("diseno_fisher", "fis"), ("objetivo5_at2", "atf"), ("cruce_lyapunov_atribucion", "cru"))
 # El informe final cita además UN bloque que NO está en final/resultados/: la prueba del borde artificial de
 # HJB (hallazgo H14 de la revisión de Astra), medida en avance/resultados/objetivo4_hjb.json y nunca publicada.
 # `avance/` es entrega cerrada: acá solo se LEE. Prefijo propio `hjb` para no chocar con cifras-avance.tex.

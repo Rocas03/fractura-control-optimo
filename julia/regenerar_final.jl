@@ -43,6 +43,14 @@ for (nombre, o) in (("objetivo2_lineal", o2), ("acuerdo_tres_metodos", oac),
     println("escrito: ", joinpath("final", "resultados", nombre * ".json"))
 end
 
+# El quinto json: la atribución del cruce de Lyapunov del §4.4 (julia/cruce_atribucion.jl). Exige reproducir bit a
+# bit el error_rel_maximo de objetivo2_lineal.json recién escrito, así que va DESPUÉS de escribirlo.
+include(joinpath(@__DIR__, "cruce_atribucion.jl"))
+open(joinpath(RES_FINAL, "cruce_lyapunov_atribucion.json"), "w") do io
+    write(io, JSON.json(cruce_atribucion(); pretty = 2), "\n")
+end
+println("escrito: ", joinpath("final", "resultados", "cruce_lyapunov_atribucion.json"))
+
 FIGS = joinpath(RAIZ, "final", "figuras")
 # La figura del objetivo 1 (F0): el plano de fase con las dos familias de §3.1. No sale de un json
 # —el del objetivo 1 es del avance, congelado—, sino de la derivación y del integrador, así que sus
