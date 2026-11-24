@@ -1,6 +1,6 @@
-# Port de semilla/verificar_modelo.py (e31f323), sección por sección y con los mismos assert. No resuelve el proyecto.
-# Las 8 identidades se comprueban en números, no en símbolos: 20 puntos al azar en BigFloat de 256 bits, derivadas por
-# paso complejo. Lo demás usa f y ∂f de «Parámetros y modelo», que son el rhs y el jac de la semilla de Python.
+# Comprobaciones numéricas de la lectura del modelo, traducidas de un script de Python con los mismos assert.
+# Las ocho identidades se comprueban en números, no en símbolos: 20 puntos al azar en BigFloat de 256 bits y derivadas
+# por paso complejo. El resto usa f y ∂f de modelo.jl.
 
 const PASO_COMPLEJO_BIG = big"1e-60"
 dcomplejo(g, x) = imag(g(complex(x, PASO_COMPLEJO_BIG))) / PASO_COMPLEJO_BIG
@@ -8,7 +8,8 @@ dcomplejo(g, x) = imag(g(complex(x, PASO_COMPLEJO_BIG))) / PASO_COMPLEJO_BIG
 const IDENTIDADES = ("balance_almacenamiento", "jacobiano_F_L", "jacobiano_F_p", "jacobiano_h_L", "jacobiano_h_p",
                      "kalman_congelado", "PMP_estacionariedad", "HJB_minimizacion")
 
-# Devuelve, por identidad, el máximo de |expresión| en los puntos.
+# Devuelve, por identidad, el máximo de |expresión| en los puntos. Aquí el modelo va con escalas a, b, C y λ
+# genéricas, no las adimensionales, para que las identidades no dependan de que valgan 1.
 function identidades_bigfloat(rng; puntos = 20)
     peor = Dict(k => big(0.0) for k in IDENTIDADES)
     setprecision(BigFloat, 256) do
@@ -49,8 +50,8 @@ function identidades_bigfloat(rng; puntos = 20)
     peor
 end
 
-# NoSpecialize: Vern9 se compila una vez por tipo de estado y no una por campo (cada clausura es un tipo nuevo); medido
-# en T6: 7,4 s de compilación en frío con la especialización por defecto.
+# Con NoSpecialize, Vern9 se compila una vez por tipo de estado y no una por cada clausura, lo que ahorra varios
+# segundos de compilación.
 const SIN_ESPECIALIZAR = parentmodule(ODEProblem).NoSpecialize
 function integrar_semilla(g, y0, tspan)
     s = solve(ODEProblem{false, SIN_ESPECIALIZAR}((y, _, t) -> g(y, t), y0, tspan), Vern9(); reltol = 2e-11,
@@ -59,6 +60,7 @@ function integrar_semilla(g, y0, tspan)
     s
 end
 
+# Corre todas las comprobaciones, falla en el primer assert que no se cumpla y devuelve lo medido para el json.
 function semilla_lectura()
     res = Dict{String, Any}()
     res["versions"] = merge(Dict("julia" => string(VERSION)),

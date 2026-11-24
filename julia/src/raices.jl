@@ -1,4 +1,5 @@
-# Regula falsi de Illinois: superlineal y siempre dentro del intervalo.
+# Raíz de g en [a, b] por regula falsi de Illinois: superlineal y siempre dentro del intervalo.
+# Si el mismo extremo se queda dos veces seguidas, se divide a la mitad su valor para no estancarse.
 function raiz(g, a, b; xtol = 4eps(), maxit = 200)
     fa, fb = g(a), g(b)
     fa == 0 && return a
@@ -24,7 +25,7 @@ function raiz(g, a, b; xtol = 4eps(), maxit = 200)
     (a + b) / 2
 end
 
-# Newton 2×2 con Jacobiano por diferencias centradas y búsqueda lineal por mitades.
+# Newton 2×2 con Jacobiano por diferencias centradas y búsqueda lineal por mitades; lo usa el disparo.
 function jac_fd(F, z; δ = 1e-6)
     h1, h2 = δ * max(1.0, abs(z[1])), δ * max(1.0, abs(z[2]))
     e1, e2 = SVector(h1, 0.0), SVector(0.0, h2)

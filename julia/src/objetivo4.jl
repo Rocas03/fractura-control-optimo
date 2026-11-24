@@ -1,3 +1,5 @@
+# Objetivo 4: HJB en tres mallas (nl, nP, nt, número de controles), cada una el doble de fina que la anterior.
+# BORDE_AMPLIO agranda el dominio de la malla media con el mismo paso, para ver que el borde no mueve V(0, x0).
 const NIVELES = ((41, 41, 10, 21), (81, 81, 20, 41), (161, 161, 40, 81))
 const BORDE_AMPLIO = (nl = 105, nP = 101, lmax = 1.0 + 104 * 1.55 / 80, Pmax = 1.5)
 
@@ -7,11 +9,14 @@ function correr_nivel(p, nl, nP, nt, nu; kw...)
     sol, lc, t_hjb, t_lc
 end
 
+# Gradiente de V en el paso k por diferencias centradas; -∇V se compara con el adjunto ζ del extremal.
 function ∇V(sol, k, x)
     h = [e[2] - e[1] for e in sol.ejes]
     [(valor(sol, k, x .+ h[i] .* (1:2 .== i)) - valor(sol, k, x .- h[i] .* (1:2 .== i))) / (2h[i]) for i in 1:2]
 end
 
+# En cada malla: V(0, x0) contra el J del disparo, el lazo cerrado de HJB contra U* del extremal, y -∇V contra ζ.
+# Los errores tienen que bajar al refinar.
 function objetivo4()
     p = Par()
     x0 = [p.ℓ0, p.P0]

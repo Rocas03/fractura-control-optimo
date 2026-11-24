@@ -1,35 +1,22 @@
-# Las cifras del INFORME FINAL: un \newcommand por cada número de los cuatro json de `final/resultados/`.
-# Mismo patrón que `cifras.jl` (que hace las del avance) y reusa su formato: `coma`, `dec`, `sci`, `exigir`,
-# `escribir_cifras`. La diferencia es el criterio de qué entra: aquí NO se eligen cifras a mano, se recorren
-# los json completos. Así ninguna cifra del informe se tipea a mano, y si un json cambia, el macro cambia solo.
-#
-# Qué entra y qué no:
-#   · todo valor ESCALAR NUMÉRICO (Int o Float), recorriendo los diccionarios anidados;
-#   · los vectores (y las listas de diccionarios) de a lo más MAX_COMPONENTES componentes, componente por
-#     componente —esto incluye las matrices 2×2, que son vectores de vectores—;
-#   · NO entran: la sección "criterios" (booleanos), cualquier otro booleano, los strings, y los vectores de
-#     más de MAX_COMPONENTES componentes (series: `nominal/q`, `frontera`, `barrido_condicionamiento`, …).
-#     `cifras_informe(; detalle = true)` devuelve, junto a las cifras, la lista de todo lo que quedó fuera
-#     con su razón, que es lo que se reporta al revisar la cobertura.
-#
-# REGLA CLAVE→NOMBRE (mecánica, documentada acá porque el nombre del macro es la única interfaz con el .tex):
-# nombre = \cf + prefijo del json + un trozo CamelCase por cada clave de la ruta; cada clave se corta por todo
-# lo que no sea [A-Za-z0-9], cada trozo va con mayúscula inicial (sin tocar las demás letras: `N400` sigue con
-# su N) y cada DÍGITO se escribe con su palabra en mayúscula inicial (0→Cero … 9→Nueve), porque \newcommand no
-# acepta dígitos ni guiones. La i-ésima componente de un vector es el trozo `cI`, o sea `CUno`, `CDos`, …
-# Ejemplos: acuerdo_tres_metodos/acuerdo_en_J/J_directo_N400 → \cfacuAcuerdoEnJJDirectoNCuatroCeroCero;
-#           objetivo2_lineal/gramiano_controlabilidad/lambda[1] → \cfdosGramianoControlabilidadLambdaCUno.
-# La unicidad del nombre se EXIGE: dos rutas distintas que den el mismo nombre son error, no silencio.
+# Cifras del informe final: un \newcommand por cada número de los json de `final/resultados/`, con el
+# formato de `cifras.jl`. Acá no se eligen cifras a mano: se recorren los json completos, así que ninguna
+# cifra del informe se tipea y, si un json cambia, la macro cambia sola.
+# Entran todos los escalares numéricos y los vectores de a lo más MAX_COMPONENTES componentes, componente
+# por componente (incluidas las matrices 2×2). Quedan fuera los criterios, los booleanos, los strings y las
+# series largas; `cifras_informe(; detalle = true)` devuelve además lo que quedó fuera y por qué.
+# El nombre de la macro es \cf + prefijo del json + un trozo CamelCase por clave de la ruta, con cada dígito
+# escrito en palabra (0 → Cero, …, 9 → Nueve), porque \newcommand no acepta dígitos; la componente i de un
+# vector es el trozo `cI`. Por ejemplo, acuerdo_tres_metodos/acuerdo_en_J/J_directo_N400 da
+# \cfacuAcuerdoEnJJDirectoNCuatroCeroCero. Dos rutas con el mismo nombre son error.
 const CIFRAS_FINAL = joinpath(RAIZ, "final", "informe", "cifras-final.tex")
 
-# Los cinco json de la entrega final, cada uno con su prefijo de macro. El quinto, `cruce_lyapunov_atribucion`,
-# lo escribe julia/cruce_atribucion.jl (19-nov): la atribución del cruce de Lyapunov del §4.4, que antes vivía
-# tipeada a mano desde docs/marco/ataque-s5/.
+# Los json de la entrega final, cada uno con su prefijo de macro; `cruce_lyapunov_atribucion` lo escribe
+# julia/cruce_atribucion.jl.
 const JSON_INFORME = (("objetivo2_lineal", "dos"), ("acuerdo_tres_metodos", "acu"),
                       ("diseno_fisher", "fis"), ("objetivo5_at2", "atf"), ("cruce_lyapunov_atribucion", "cru"))
-# El informe final cita además UN bloque que NO está en final/resultados/: la prueba del borde artificial de
-# HJB (hallazgo H14 de la revisión de Astra), medida en avance/resultados/objetivo4_hjb.json y nunca publicada.
-# `avance/` es entrega cerrada: acá solo se LEE. Prefijo propio `hjb` para no chocar con cifras-avance.tex.
+# El informe cita además un bloque de avance/resultados/objetivo4_hjb.json, la prueba del borde artificial
+# de HJB. `avance/` es una entrega cerrada y acá solo se lee; el prefijo `hjb` evita chocar con las cifras
+# del avance.
 const RES_AVANCE = joinpath(RAIZ, "avance", "resultados")
 const JSON_AVANCE_INFORME = (("objetivo4_hjb", "hjb", ["borde"]),)
 const MAX_COMPONENTES = 4
@@ -55,6 +42,7 @@ function numero_informe(x)
     dec(x, max(0, 3 - floor(Int, log10(a))))
 end
 
+# Recorre el json y separa lo que entra como cifra de lo que queda fuera, con su razón.
 function _recorrer!(c, fuera, prefijo, ruta, v)
     nombre() = nombre_cifra(prefijo, ruta)
     camino() = join(ruta, "/")

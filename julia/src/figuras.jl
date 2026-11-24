@@ -1,9 +1,7 @@
-# Figuras del reporte en pgfplots, escritas desde Julia: port de figura_comparacion y figura_cota_activa
-# (e31f323:avance/codigo/objetivo3_pontryagin.py) y de figura_retroalimentacion (objetivo4_hjb.py), con el estilo
-# de graficos.py: letra de 7 y 8 pt, colores y trazos de matplotlib, grilla al 25 % y coma decimal. Cada figura es
-# un tikzpicture con las coordenadas en línea, que el reporte incluye con \input{figuras/<n>.tex}. Los tamaños de
-# eje (en pt) están calibrados para que cada figura mida lo que medía en matplotlib sin cajas sobrellenas:
-# 7,0 × 1,85 in la comparación; 0,40 y 0,50 del ancho de texto × 1,75 in las otras dos.
+# Figuras en pgfplots, escritas desde Julia. Las tres primeras son las del reporte de avance (comparación de
+# controles, cota activa y retroalimentación), con el estilo de las de matplotlib que reemplazan: letra de 7
+# y 8 pt, colores y trazos de matplotlib, grilla al 25 % y coma decimal. Cada figura es un tikzpicture con
+# las coordenadas en línea, y los tamaños de eje (en pt) están calibrados para que midan lo mismo que antes.
 const FIGURAS = joinpath(RAIZ, "avance", "reporte", "figuras")
 const TAMANOS = (comparacion = (w = 130.9, h = 106.75, sep = 40.0), cota = (w = 168.6, h = 98.8),
                  retro = (w = 219.4, h = 99.5))
@@ -36,6 +34,7 @@ const TRAZO = Dict("k-" => "black, solid", "C0--" => "C0, dashed", "C1-." => "C1
                    "C0:" => "C0, dotted", "C1--" => "C1, dashed", "C2--" => "C2, dashed",
                    "rojo-" => "rojo, solid")
 
+# Una curva como \addplot, con sus coordenadas en línea.
 function curva(io, trazo, x, y; ancho = 1.2, extra = "")
     print(io, "\\addplot[", TRAZO[trazo], ", line width=", ancho, "pt, no marks", extra, "] table[row sep=\\\\] {x y\\\\\n")
     for (a, b) in zip(x, y)
@@ -44,6 +43,7 @@ function curva(io, trazo, x, y; ancho = 1.2, extra = "")
     print(io, "};\n")
 end
 
+# Comparación de controles (C3): U, ℓ y P del extremal contra las inyecciones simples, en tres paneles.
 function figura_comparacion(io, d)
     s = TAMANOS.comparacion
     print(io, COLORES, "\\begin{tikzpicture}\n\\begin{groupplot}[group style={group size=3 by 1, horizontal sep=",
@@ -59,6 +59,7 @@ function figura_comparacion(io, d)
     print(io, "\\end{groupplot}\n\\end{tikzpicture}%\n")
 end
 
+# Caso con q_max = 0,8, donde la cota se activa: el disparo contra el directo, con la conmutación marcada.
 function figura_cota_activa(io, d)
     s = TAMANOS.cota
     print(io, COLORES, "\\begin{tikzpicture}\n\\begin{axis}[", EJE, ", width=", s.w, "pt, height=", s.h, "pt, ",
@@ -78,6 +79,7 @@ function figura_cota_activa(io, d)
     print(io, "\\end{axis}\n\\end{tikzpicture}%\n")
 end
 
+# Retroalimentación (C4): U* del PMP contra el lazo cerrado de HJB en tres mallas.
 function figura_retroalimentacion(io, d)
     s = TAMANOS.retro
     print(io, COLORES, "\\begin{tikzpicture}\n\\begin{axis}[", EJE, ", width=", s.w, "pt, height=", s.h, "pt, ",
@@ -91,6 +93,7 @@ function figura_retroalimentacion(io, d)
     print(io, "\\end{axis}\n\\end{tikzpicture}%\n")
 end
 
+# Escribe las tres figuras del avance, una por archivo .tex.
 function escribir_figuras(d, dir = FIGURAS)
     mkpath(dir)
     for (nombre, f, x) in (("comparacion", figura_comparacion, d.comparacion), ("cota-activa", figura_cota_activa, d.cota),
@@ -104,16 +107,9 @@ function escribir_figuras(d, dir = FIGURAS)
     end
 end
 
-# ---- F2 · la figura del acuerdo entre los tres métodos -------------------------------------------
-# Un solo par de ejes con los tres controles, y un recuadro interior con las discrepancias punto a
-# punto en escala logarítmica. El recuadro son EJES PROPIOS, no un segundo eje y sobre los mismos:
-# dos escalas y en un mismo marco es el error de lectura más común en una figura y acá no haría
-# falta, porque el recuadro compara |ΔU| con |ΔU| y no con U.
-# El recuadro va arriba a la derecha porque ahí no hay datos: U va de 1,08 en τ = 0 a casi 0 en
-# τ = T, o sea de la esquina superior izquierda a la inferior derecha; la leyenda ocupa la inferior
-# izquierda, como en figura_retroalimentacion.
-# Identidad por color Y por trazo (continuo / rayado / punteado): un lector que no distingue el azul
-# del verde sigue separando las tres curvas.
+# Figura del acuerdo entre los tres métodos (C4): los tres controles en un par de ejes y, en un recuadro con
+# ejes propios, las diferencias punto a punto en escala logarítmica. El recuadro va arriba a la derecha,
+# donde no hay datos, y cada curva se distingue por color y por trazo.
 const TAM_ACUERDO = (w = 219.4, h = 132.0, wr = 74.0, hr = 46.0)
 const EJE_CHICO = raw"scale only axis, axis line style={line width=0.6pt}, tick style={black, line width=0.6pt}, " *
                   raw"tick align=outside, major tick length=2pt, xtick pos=lower, ytick pos=left, grid=major, " *
@@ -141,8 +137,7 @@ function figura_acuerdo(io, d)
     print(io, "\\begin{axis}[at={(principal.north east)}, anchor=north east, xshift=-5pt, yshift=-5pt, ", EJE_CHICO,
           ", width=", s.wr, "pt, height=", s.hr, "pt, ylabel={\$|\\Delta U|\$}, ",
           "ylabel style={yshift=-2pt}, xtick={0,1,2}, enlarge x limits=0.03]\n")
-    # Piso de 1e-16 para que un cero exacto no rompa la escala logarítmica. Ningún valor medido lo
-    # alcanza; está por si una corrida futura da una coincidencia exacta.
+    # Piso de 1e-16 para que un cero exacto no rompa la escala logarítmica.
     curva(io, "C0--", d.dif_directo.t, max.(d.dif_directo.d, 1e-16); ancho = 0.8)
     curva(io, "C2:", d.dif_hjb.t, max.(d.dif_hjb.d, 1e-16); ancho = 0.8)
     print(io, "\\end{axis}\n\\end{tikzpicture}%\n")
@@ -159,21 +154,13 @@ function escribir_figura_acuerdo(d, dir)
     archivo
 end
 
-# ---- F3.3 · la frontera control ↔ información ----------------------------------------------------
-# Dos paneles. El izquierdo NO grafica log det M, que es el criterio que se optimiza, sino su
-# consecuencia legible: la cota de Cramér–Rao RELATIVA de cada parámetro a lo largo de la frontera,
-# contra el costo de control J, que es el precio que se paga. Así se lee de una vez lo que el
-# resultado dice —tres de los cuatro parámetros ya están identificados al 1–2 % en el óptimo de
-# control puro, y el único que hay que comprar es η— en vez de un número (log det M) que nadie lee.
-# Escala logarítmica en y porque las cotas abarcan dos órdenes y en lineal las tres chicas se
-# apoyarían en el eje. Identidad por color Y por trazo, y η en negro grueso: es la protagonista.
-# El panel derecho son los controles de los tres γ que se citan en el texto, y muestra el hallazgo
-# que no está en los números: lo que cambia con γ es la FORMA del control (rampa decreciente →
-# pulso tardío saturado), no su tamaño.
-# El punto γ = 0,3 va marcado aparte, en rojo y hueco: agotó las 500 iteraciones con ‖g_proy‖ =
-# 1,2e-1, así que es un iterado y no un óptimo, y la figura no lo puede presentar como uno.
-# Un solo eje y por panel (nada de dos escalas en un marco), ymax con aire arriba para que la nota
-# de lectura no se monte sobre la curva de η, y la leyenda en la franja vacía del medio.
+# Figura de la frontera de Fisher, en dos paneles. El izquierdo no grafica log det M sino su consecuencia
+# legible: la cota de Cramér–Rao relativa de cada parámetro contra el costo J, en escala logarítmica, con η
+# en negro grueso porque es el único que hay que comprar. El derecho muestra los controles de los tres γ
+# que cita el texto: lo que cambia con γ es la forma del control (de rampa decreciente a pulso tardío
+# saturado), no su tamaño.
+# El punto γ = 0,3 va aparte, en rojo y hueco, porque Ipopt agotó sus iteraciones ahí: es un iterado y no
+# un óptimo.
 const TAM_FRONTERA = (w = 152.0, h = 122.0, sep = 46.0)
 # En el orden de PARS_SENS; `pars` del json lo confirma en tiempo de escritura.
 const TRAZOS_PARS = ("C0--", "C2:", "k-", "C1-.")
@@ -181,10 +168,11 @@ const ANCHOS_PARS = (1.0, 1.0, 1.8, 1.0)
 const ROTULOS_PARS = Dict("n" => "n", "c" => "c", "η" => "\\eta", "P0" => "P_0")
 const GAMMAS_ROTULADAS = (codo = GAMMA_CODO, iterado = 0.3, extremo = 3.0)
 
-# El punto de la frontera con ese γ. Comparación exacta: los γ vienen de GAMMAS_FRONTERA, que son
-# los mismos literales, y un punto que no esté es un error de datos, no algo que redondear.
+# El punto de la frontera con ese γ. La comparación es exacta porque los γ son los mismos literales de
+# GAMMAS_FRONTERA.
 punto_gamma(fr, γ) = fr[findfirst(r -> Float64(r["gamma"]) == γ, fr)]
 
+# Como `curva`, pero con un marcador en cada punto.
 function curva_marcada(io, trazo, x, y; ancho = 1.2, marca = "*", tam = 1.5, extra = "")
     print(io, "\\addplot[", TRAZO[trazo], ", line width=", ancho, "pt, mark=", marca, ", mark size=", tam,
           "pt, mark options={solid}", extra, "] table[row sep=\\\\] {x y\\\\\n")
@@ -210,19 +198,9 @@ function panel_cotas(io, o)
     print(io, "\\nextgroupplot[xlabel={costo de control \$J\$}, ylabel={cota relativa [\\%]}, ymode=log, ",
           "enlarge x limits=0.08, enlarge y limits=false, ymin=0.15, ymax=250, ytick={0.3,1,3,10,30,100}, ",
           "yticklabels={0{,}3,1,3,10,30,100}, legend style={at={(0.98,0.74)}, anchor=north east, font=\\tiny, draw=none, ",
-          # ⚠️ 15-nov-2026: `fill=white, fill opacity=0.85` se PROBÓ y se revirtió. Tapa el problema
-          # —la muestra negra de η se leía como un tramo de curva— pero el velo blanco DESTIÑE la
-          # curva negra real y el marcador del codo que pasan por detrás: quedan grises y se leen
-          # como otra serie. Peor que el defecto. El arreglo correcto es MOVER la leyenda al hueco
-          # de arriba a la derecha, no ponerle fondo. Detalle en docs/marco/figuras-a-la-vista/.
-          #
-          # 15-nov-2026, 23.º relevo: movida. En (0.03,0.5) las CUATRO muestras quedaban sobre el
-          # área de datos y las cuatro se leían como tramos de curva —no solo la negra de η—,
-          # porque `curva_marcada` les pone marcador y la muestra de `c` caía encima del trazo de
-          # la curva negra. Medido a 400 dpi sobre la plana 10. Se mueve al hueco de arriba a la
-          # derecha (anchor north east en (0.98,0.74)), bajo el nodo de anotación y sobre las
-          # curvas, que ahí no pasan de cota 5. Se mantiene `draw=none, fill=none` como todas las
-          # demás leyendas del informe: si estuviera vacío el hueco, no hace falta fondo.
+          # La leyenda va en el hueco de arriba a la derecha y sin fondo: un fondo blanco semitransparente
+          # destiñe las curvas que pasan por detrás, y en otras posiciones las muestras se leían como tramos
+          # de curva.
           "fill=none, column sep=5pt}, legend columns=2]\n")
     for k in eachindex(pars)
         curva_marcada(io, TRAZOS_PARS[k], J, cota(k); ancho = ANCHOS_PARS[k])
@@ -282,15 +260,10 @@ function escribir_figura_frontera(o, dir)
     archivo
 end
 
-# ---- F1.4 · el LQ de seguimiento, que es lo que justifica haber linealizado ----------------------
-# Cuatro paneles: una columna por perturbación (P(0) un 20 % arriba, y η un 20 % arriba, que es el
-# mismo parámetro que F3.3 muestra que NO se puede medir — por eso este experimento importa), y dos
-# filas, el largo ℓ(τ) arriba y el caudal U(τ) abajo. Tres trazos por panel: la nominal (lo que se
-# quería), el lazo abierto sobre el sistema perturbado (lo que pasa si uno no corrige) y el LQ de
-# seguimiento (lo que pasa si corrige). La lectura está en el ESPACIO entre la nominal y el lazo
-# abierto al final del horizonte, así que el panel de ℓ lleva marcado ese error terminal.
-# Las series son las de `datos_figura_lq`, que rehace el experimento con `casos_lq`, la misma lista
-# que usa el json: la figura y las cifras no pueden estar mirando dos experimentos distintos.
+# Figura del LQ de seguimiento (C2): una columna por perturbación (P(0) o η un 20 % arriba) y dos filas,
+# ℓ(τ) arriba y U(τ) abajo. En cada panel van la nominal, el lazo abierto sobre el sistema perturbado y el
+# LQ de seguimiento; el panel de ℓ lleva escrito el error terminal, que es el resultado. Las series vienen
+# de `datos_figura_lq`, que usa la misma lista de casos que el json.
 const TAM_LQ = (w = 150.0, h = 92.0, sep = 44.0, vsep = 26.0)
 const ROTULOS_CASOS = Dict("P0" => "\$P(0)\$ un 20\\,\\% arriba", "eta" => "\$\\eta\$ un 20\\,\\% arriba")
 
@@ -313,8 +286,8 @@ function figura_lq(io, d)
             curva(io, "C0--", d.t, getfield(c.ce, campo); ancho = 1.1)
             fila == 2 && col == 1 && print(io, "\\addlegendentry{LQ de seguimiento}\n")
             if fila == 1
-                # El resultado del experimento es el error TERMINAL, que en una curva de ℓ(τ) casi no
-                # se ve: va escrito, con el factor que el criterio del plan exige mayor que 3.
+                # El error terminal casi no se ve en la curva de ℓ(τ), así que va escrito, con el factor de
+                # mejora del LQ sobre el lazo abierto.
                 da = abs(c.ab.xT[1] - d.ellT_nominal)
                 dc = abs(c.ce.xT[1] - d.ellT_nominal)
                 print(io, "\\node[anchor=north west, align=left, font=\\tiny, inner sep=1pt] at (rel axis cs:0.03,0.97) {",
@@ -341,18 +314,13 @@ function escribir_figura_lq(d, dir)
     archivo
 end
 
-# ---- F4 · objetivo 5: el programa de carga óptimo y la evolución del daño ------------------------
-# Dos paneles, el control y el estado: a la izquierda el programa de carga d_k que resuelve el
-# seguimiento —el patrón cerrado, el descenso proyectado y el punto de partida—, a la derecha el campo
-# α(x) que ese programa produce, etapa por etapa. Son el MISMO experimento: la barra con defecto en el
-# centro y α = 0 en los extremos, así que el daño localiza y α(x,t) tiene forma en vez de ser una
-# constante (en la barra homogénea α es uniforme y el panel derecho serían seis rectas).
-# El recuadro va en el panel izquierdo porque el programa de carga es creciente y deja libre la
-# esquina inferior derecha, y compara |Λ−blanco| con |Λ−blanco|: el cerrado contra el descenso, en
-# escala logarítmica, que es la única forma de ver 1e-14 y 2e-4 en el mismo marco.
-# No se usa groupplot: el recuadro necesita anclar a un eje con nombre.
+# Figura del objetivo 5 (C5), en dos paneles del mismo experimento sobre la barra con defecto: a la
+# izquierda el programa de carga d_k (el óptimo cerrado, el descenso proyectado y el punto de partida) y a
+# la derecha el daño α(x) que produce, etapa por etapa. El recuadro compara |Λ − blanco| del cerrado y del
+# descenso en escala logarítmica. No se usa groupplot porque el recuadro necesita anclarse a un eje con
+# nombre.
 const TAM_AT2 = (w = 148.0, h = 122.0, sep = 50.0, wr = 66.0, hr = 40.0)
-# Las seis etapas, de la más clara a la más oscura: identidad por color Y por trazo.
+# Las seis etapas, de la más clara a la más oscura, distintas por color y por trazo.
 const TRAZOS_AT2 = ("C0:", "C2:", "C0--", "C2--", "C1--", "k-")
 const ANCHOS_AT2 = (0.8, 0.8, 0.9, 0.9, 1.0, 1.6)
 
@@ -371,16 +339,9 @@ function panel_programa_at2(io, d)
     curva_marcada(io, "k-", k, d.carga_cerrada ./ d.escala; ancho = 1.4, marca = "*", tam = 1.4)
     print(io, "\\addlegendentry{óptimo cerrado}\n")
     print(io, "\\end{axis}\n")
-    # El recuadro: el error de seguimiento por etapa, que es lo que el gráfico grande no puede mostrar
-    # porque las dos cargas se superponen.
-    # `yshift=6pt` dejaba los rótulos del eje x del recuadro montados sobre la línea del eje del panel
-    # grande, y `axis background` de EJE_CHICO solo pinta el ÁREA de datos: los rótulos de los ejes del
-    # recuadro quedan fuera de ella y la curva punteada del punto de partida pasaba por encima del
-    # «10^-8». Medido el 15-nov-2026 sobre el PDF a 400 dpi. Se sube el recuadro y se le da fondo
-    # blanco a cada rótulo, que es el mismo recurso de la caja blanca de la figura del objetivo 1.
-    # 17pt y no 15: con 15 la curva punteada del punto de partida asomaba 0,7pt sobre el borde
-    # superior derecho del recuadro y quedaba un punto azul suelto que se leía como una mota.
-    # Medido a 400 dpi el 15-nov-2026; con 17pt desaparece y el óptimo cerrado sigue a ~8pt.
+    # El recuadro muestra el error de seguimiento por etapa, que el gráfico grande no deja ver porque las
+    # dos cargas se superponen. Va subido y con fondo blanco en los rótulos para que la curva punteada no
+    # pase por encima de ellos.
     print(io, "\\begin{axis}[at={(programa.south east)}, anchor=south east, xshift=-6pt, yshift=17pt, ",
           EJE_CHICO, ", width=", s.wr, "pt, height=", s.hr,
           "pt, ylabel={\$|\\Lambda_k-\\Lambda^\\ast_k|\$}, ",
@@ -443,27 +404,22 @@ function escribir_figura_at2_control(d, dir)
     archivo
 end
 
-# ---- F0 · objetivo 1: el plano de fase, y por qué el problema de control no es trivial -----------
-# Dos paneles en el MISMO plano de fase (ℓ, P), uno por familia de §3.1. Izquierda, U ≡ 0: cuatro
-# presiones iniciales, cada trayectoria muriendo en su equilibrio (ℓ_∞, 0) — ahí van dos marcas, la
-# raíz de la integral (3.4) y la cota explícita (3.5), de modo que la figura DIBUJA las dos
-# afirmaciones derivadas en vez de ilustrarlas. Derecha, U constante: cuatro caudales hasta T,
-# ninguno con equilibrio (el sistema no se detiene mientras se inyecte), y el umbral U* que alcanza
-# ℓd exactamente en τ = T. La lectura de la figura es la línea ℓd, que la familia libre no cruza
-# nunca y la forzada cruza solo por encima de U*: eso es lo que hace no trivial el §6.
-# Las cifras van en las leyendas, no en un recuadro: son una por curva y la leyenda ya las ordena.
+# Figura del objetivo 1 (C1): dos paneles en el mismo plano de fase (ℓ, P). A la izquierda, sin inyectar,
+# cuatro presiones iniciales que terminan en su equilibrio (ℓ_∞, 0), marcado junto con su cota explícita.
+# A la derecha, cuatro caudales constantes, ninguno con equilibrio, y el umbral U_c que llega justo a ℓ_d
+# en τ = T. La familia libre nunca cruza la línea ℓ_d y la forzada solo la cruza por encima del umbral:
+# por eso el problema de control no es trivial.
 const TAM_OBJ1 = (w = 152.0, h = 116.0, sep = 46.0)
 const TRAZOS_OBJ1 = ("C0:", "k-", "C1-.", "C2--")
 const ANCHOS_OBJ1 = (1.0, 1.6, 1.1, 1.1)
 
-"La línea vertical ℓ = ℓd: el objetivo que las dos familias cruzan o no."
+# La línea vertical ℓ = ℓ_d, el largo objetivo.
 linea_objetivo(io, ℓd) =
     print(io, "\\draw[gris40, dashed, line width=0.8pt] ({axis cs:", ℓd, ",0} |- {rel axis cs:0,0}) -- ",
           "({axis cs:", ℓd, ",0} |- {rel axis cs:0,1});\n")
 
-# El rótulo ℓd va como tick extra del eje, no como nodo adentro: un nodo arriba de la línea lo tapa la
-# leyenda, que pgfplots dibuja al final pase lo que pase (medido el 15-nov: la caja blanca de la leyenda
-# del panel libre se comía la mitad del subíndice).
+# El rótulo ℓ_d va como tick extra del eje y no como nodo adentro, porque pgfplots dibuja la leyenda al
+# final y lo taparía.
 rotulo_objetivo(ℓd) = "extra x ticks={$ℓd}, extra x tick labels={\$\\ell_d\$}, " *
                       "extra x tick style={grid=none, tick style={gris40}, " *
                       "tick label style={font=\\scriptsize, text=gris30}}, "
@@ -497,8 +453,7 @@ function panel_forzada_obj1(io, d)
         print(io, "\\addlegendentry{\$U=", rot_caudal(c.U), "\$: \$\\ell(T)=", dec(c.ellT, 3), "\$}\n")
         marca_suelta(io, c.ellT, c.PT, "black, mark=*, mark size=1.5pt, forget plot")
     end
-    # El umbral no es un recuadro de texto: es una trayectoria más, la única que termina SOBRE la línea
-    # ℓd. Dibujarla es lo que convierte «hay umbral» en algo que se ve.
+    # El umbral se dibuja como una trayectoria más, la única que termina justo sobre la línea ℓ_d.
     curva(io, "rojo-", d.umbral.ℓ, d.umbral.P; ancho = 1.3)
     print(io, "\\addlegendentry{\$U_{\\mathrm{c}}=", dec(d.Ustar, 3), "\$: \$\\ell(T)=\\ell_d\$}\n")
     marca_suelta(io, d.umbral.ellT, d.umbral.PT, "rojo, mark=*, mark size=1.5pt, forget plot")

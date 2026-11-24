@@ -1,34 +1,18 @@
-# Objetivo 2: el sistema linealizado en torno a una trayectoria nominal, y lo que se lee de él.
-#
-# La nominal es, cuando importa, EL ÓPTIMO del método directo (objetivo 3), no una trayectoria
-# inventada: así el objetivo 2 contesta «¿para qué sirve linealizar?» con «para seguir el óptimo
-# cuando el estado inicial o los parámetros no son los nominales», que es la tarea 1.4.
-#
-#   nominal_control / nominal_optima   la nominal como par (t -> x, t -> u), de dos fuentes.
-#   matrices_lineales                  A(t) = ∂f/∂x y B(t) = ∂f/∂u evaluados sobre ella.
-#   fundamental[_densa]                Φ(t1,t0) por Φ' = A(t)Φ, Φ(t0,t0) = I.
-#   propagador_final                   Ψ(s) = Φ(T,s) por dΨ/ds = -Ψ A(s), Ψ(T) = I. Evita invertir Φ.
-#   gramiano_controlabilidad           W = ∫₀ᵀ Φ(T,s)B B'Φ(T,s)' ds, POR CUADRATURA.
-#   gramiano_observabilidad            M = ∫₀ᵀ Φ(s,0)'C'C Φ(s,0) ds, con C = [0 1] (solo la presión).
-#   kalman_congelado / observabilidad_congelada   rango numérico de [B AB] y de [C; CA] en un t.
-#   energia_minima                     el control que lleva 0 a z_T con ∫u² mínima, y esa energía.
-#   riccati / lazo_cerrado             LQ de seguimiento y su simulación en el sistema NO lineal.
-#
-# Por qué la cuadratura y no la EDO de Lyapunov: `semilla.jl` ya calcula los mismos W y M integrando
-# W' = AW + WA' + BB' y ∫X'C'CX junto al estado. Calcularlos acá por un camino distinto —cuadratura de
-# Gauss–Kronrod sobre el propagador— convierte la coincidencia en una verificación cruzada de verdad, y
-# no en volver a correr el mismo código. Las pruebas 1.2 y 1.3 comparan contra esos valores.
+# Objetivo 2: el sistema linealizado en torno a una trayectoria nominal, que cuando importa es el óptimo del método
+# directo. Aquí están la matriz fundamental Φ, los gramianos de controlabilidad y de observabilidad (midiendo solo la
+# presión), los tests de Kalman en un instante, el control de energía mínima y un LQ que sigue al óptimo.
+# Los gramianos se calculan por cuadratura sobre Φ y no con la EDO de Lyapunov que ya integra semilla.jl, para que la
+# coincidencia con la semilla sea un cruce entre dos caminos distintos.
 
-# ∂f/∂u: el caudal entra solo en la ecuación de P, dividido por el almacenamiento D(ℓ).
-# `semilla.jl` tiene su propia copia local de esto (`Bu`); la prueba 1.1 ata las dos a diferencias
-# finitas de `f`, que es lo que impide que se separen sin que nadie lo note.
+# ∂f/∂U: el caudal entra solo en la ecuación de P, dividido por el almacenamiento D.
 ∂fu(x, p) = SVector(0.0, 1 / D(x, p))
 
-# C = [0 1]: en el pozo se mide la presión. La longitud de la fractura no se observa directamente,
-# y eso es justo lo que el Gramiano de observabilidad cuantifica.
+# C = [0 1]: en el pozo se mide la presión. El largo no se observa directamente, y eso es lo que cuantifica el
+# gramiano de observabilidad.
 const C_PRESION = SMatrix{1, 2}(0.0, 1.0)
 const I2 = SMatrix{2, 2}(1.0, 0.0, 0.0, 1.0)
 
+# Trayectoria nominal: el estado t -> x y el control t -> u.
 struct Nominal{X, U}
     p::Par
     x::X
@@ -38,15 +22,14 @@ end
 
 (nom::Nominal)(t) = nom.x(t)
 
-# Nominal de un control cualquiera dado como función de t. Es la forma de las tres trayectorias de
-# referencia de la semilla, y por eso la que usan las pruebas del control cruzado.
+# Nominal de un control dado como función de t, como las tres trayectorias de referencia de la semilla.
 function nominal_control(p::Par, ufun, x0; T = p.T)
     s = integrar((y, t) -> f(y, ufun(t), p), SVector{2}(x0), (0.0, T))
     Nominal(p, τ -> SVector{2}(s(τ)), ufun, T)
 end
 
-# Nominal del óptimo del método directo: control constante a trozos sobre la malla, estado con la
-# salida densa de Hermite de los mismos tramos RK4 que usan `avance` y `adjunto`.
+# Nominal del óptimo del método directo: control constante a trozos y estado con la salida densa de los mismos
+# tramos RK4 que usan avance y adjunto.
 function nominal_optima(p::Par, q::AbstractVector)
     t = malla(p, length(q))
     tramos = avance(q, p)[2]
@@ -54,6 +37,7 @@ function nominal_optima(p::Par, q::AbstractVector)
     Nominal(p, τ -> x2(tramos[idx(τ)](clamp(τ, 0.0, p.T))), τ -> q[idx(τ)], p.T)
 end
 
+# A(t) = ∂f/∂x y B(t) = ∂f/∂U sobre la nominal.
 matrices_lineales(nom::Nominal, t) = (x = nom.x(t); (∂f(x, nom.u(t), nom.p), ∂fu(x, nom.p)))
 
 # Φ(·,t0) con salida densa: Φ' = A(t)Φ. Sirve hacia adelante y hacia atrás según el orden de (t0,t1).
@@ -64,9 +48,8 @@ end
 
 fundamental(nom::Nominal, t0, t1) = fundamental_densa(nom, t0, t1)(t1)
 
-# Ψ(s) = Φ(T,s): dΨ/ds = -Ψ A(s) con Ψ(T) = I. Se integra de T a 0 y se evalúa en cualquier s, que es
-# lo que la cuadratura del Gramiano necesita. Invertir Φ(s,0) daría lo mismo en teoría y arrastraría el
-# condicionamiento de Φ en la práctica.
+# Ψ(s) = Φ(T,s), de dΨ/ds = -Ψ A(s) con Ψ(T) = I, integrada de T a 0. Invertir Φ(s,0) daría lo mismo en teoría,
+# pero arrastraría su condicionamiento.
 function propagador_final(nom::Nominal, T = nom.T)
     s = integrar((Y, t) -> vec(-SMatrix{2, 2}(Y) * matrices_lineales(nom, t)[1]), vec(I2), (T, 0.0))
     τ -> SMatrix{2, 2}(s(τ))
@@ -74,10 +57,8 @@ end
 
 simetrizar(W) = SMatrix{2, 2}((W + W') / 2)
 
-# B1 del ataque a §5 (15-nov): el contraste con la semilla NO toca los Gramianos de §5.2 — corre sobre
-# las tres nominales de `nominales_semilla`. Este es el cruce sobre la nominal del óptimo, por el
-# segundo camino de verdad: W' = AW + WA' + BB' con W(0) = 0, y -V' = A'V + VA + C'C con V(T) = 0, que
-# dan W(T) y V(0) = M sin pasar por el propagador ni por la cuadratura.
+# Cruce de los gramianos sobre la nominal del óptimo por las EDO de Lyapunov: W' = AW + WAᵀ + BBᵀ con W(0) = 0 y
+# -V' = AᵀV + VA + CᵀC con V(T) = 0 dan W(T) y V(0) = M sin propagador ni cuadratura.
 function cruce_lyapunov_nominal(nom::Nominal; T = nom.T)
     fW = function (Y, t)
         AB = matrices_lineales(nom, t)
@@ -101,6 +82,7 @@ function cruce_lyapunov_nominal(nom::Nominal; T = nom.T)
      error_rel_controlabilidad = eW, error_rel_observabilidad = eM, error_rel_maximo = max(eW, eM))
 end
 
+# W = ∫ Φ(T,s) B Bᵀ Φ(T,s)ᵀ ds y M = ∫ Φ(s,0)ᵀ Cᵀ C Φ(s,0) ds, por cuadratura de Gauss-Kronrod.
 function gramiano_controlabilidad(nom::Nominal; T = nom.T)
     Ψ = propagador_final(nom, T)
     W = quadgk(s -> (g = Ψ(s) * ∂fu(nom.x(s), nom.p); g * g'), 0.0, T; rtol = 1e-12, atol = 1e-14)[1]
@@ -113,12 +95,13 @@ function gramiano_observabilidad(nom::Nominal; T = nom.T)
     SMatrix{2, 2}(M)
 end
 
-# Rango numérico de una 2×2 por valores singulares, con el umbral relativo de siempre.
+# Rango numérico de una 2×2 por valores singulares, con umbral relativo √eps.
 function _rango_sv(K)
     sv = svdvals(K)
     (rango = count(>(sqrt(eps(Float64)) * max(sv[1], 1.0)), sv), sv = SVector{2}(sv))
 end
 
+# Rango de [B AB] y de [C; CA] con las matrices congeladas en un instante t.
 kalman_congelado(nom::Nominal, t) = (AB = matrices_lineales(nom, t); _rango_sv(hcat(AB[2], AB[1] * AB[2])))
 observabilidad_congelada(nom::Nominal, t) =
     (A = matrices_lineales(nom, t)[1]; _rango_sv(vcat(C_PRESION, C_PRESION * A)))
@@ -146,8 +129,8 @@ end
 
 ganancia_lq(nom::Nominal, P, t; R = 1.0) = -(matrices_lineales(nom, t)[2]' * P(t)) / R
 
-# Simula el sistema NO LINEAL con el control de seguimiento, recortado a [0, qmax] porque es un caudal.
-# `θ` permite correr con parámetros distintos de los nominales: es el experimento de la tarea 1.4.
+# Simula el sistema no lineal con el control de seguimiento, recortado a [0, qmax] porque es un caudal. Con x0 o p
+# distintos de los nominales es el experimento de perturbación; con lazo_abierto se aplica solo el control nominal.
 function lazo_cerrado(nom::Nominal, P; x0 = nom.x(0.0), p = nom.p, R = 1.0, T = nom.T, lazo_abierto = false)
     control(t, x) = begin
         q̄ = nom.u(t)
@@ -160,25 +143,17 @@ function lazo_cerrado(nom::Nominal, P; x0 = nom.x(0.0), p = nom.p, R = 1.0, T = 
      J = Φ(x2(s.u[end]), p) + s.u[end][3])
 end
 
-# ──────────────────────────────────────────────────────────────────────────────────────────────────
-# El resultado del objetivo 2: todo lo medido, con sus criterios fijados acá y no después de mirar.
-# Lo escribe `regenerar_final.jl` en `final/resultados/objetivo2_lineal.json`.
+# Resultado del objetivo 2, que regenerar_final.jl escribe en final/resultados/objetivo2_lineal.json.
 
 const N_OBJ2 = 50                                  # tramos del control del óptimo nominal
 
-# Los dos casos del experimento de la tarea 1.4 en UN solo lugar: el json (`objetivo2`) y la figura
-# (`datos_figura_lq`) tienen que correr exactamente el mismo experimento, y dos listas copiadas
-# divergen sin que ningún criterio lo note.
+# Los dos casos del experimento LQ (P0 o η un 20 % mayores), en un solo lugar para que el json y la figura corran
+# exactamente lo mismo.
 casos_lq(p) = (("P0", SVector(p.ℓ0, (1 + PERT) * p.P0), p),
                ("eta", SVector(p.ℓ0, p.P0), con(p; η = (1 + PERT) * p.η)))
 
-"""
-    datos_figura_lq(p; N, npts)
-
-Las series temporales del experimento LQ, que el json NO guarda (ahí van solo los escalares). Rehace
-la nominal y la Riccati con los mismos pesos y devuelve, por caso, las tres trayectorias (nominal,
-lazo abierto perturbado, LQ perturbado) y sus controles.
-"""
+# Series temporales del experimento LQ para la figura, que el json no guarda: por caso, la nominal, el lazo abierto
+# perturbado y el LQ perturbado, con sus controles.
 function datos_figura_lq(p::Par = Par(); N = N_OBJ2, npts = 401)
     nom = nominal_optima(p, optimizar(p, N).x)
     Q = SMatrix{2, 2}(0.0, 0.0, 0.0, p.wp)
@@ -205,13 +180,14 @@ const UMBRAL_DEGEN = 1e-10                         # σ₂/σ₁ bajo el cual se
 filas(A) = [collect(r) for r in eachrow(A)]
 cond2(λ) = (m = minimum(λ); m ≤ 0 ? Inf : maximum(λ) / m)
 
-# Las tres nominales que `semilla.jl` usa para sus Gramianos de referencia, reconstruidas acá para
-# poder contrastar: la presurizada con u(t) = 0.5 + 0.1 sin t desde (1, 0.3), y las dos de reposo.
+# Las tres nominales de los gramianos de referencia de semilla.jl: la presurizada, con u(t) = 0.5 + 0.1 sin t desde
+# (1, 0.3), y las dos de reposo.
 nominales_semilla(p = Par()) = Dict(
     "trayectoria_presurizada" => nominal_control(con(p; n = 2.0), t -> 0.5 + 0.1 * sin(t), SVector(1.0, 0.3); T = 2.0),
     "reposo_n2" => nominal_control(con(p; n = 2.0), _ -> 0.0, SVector(1.0, 0.0); T = 2.0),
     "reposo_n1" => nominal_control(con(p; n = 1.0), _ -> 0.0, SVector(1.0, 0.0); T = 2.0))
 
+# Gramianos por cuadratura contra los de la semilla, en esas tres nominales.
 function contraste_semilla(sem = semilla_lectura(), p = Par())
     out = Dict{String, Any}()
     peor = 0.0
@@ -225,8 +201,7 @@ function contraste_semilla(sem = semilla_lectura(), p = Par())
         out[caso] = Dict{String, Any}("controlabilidad_cuadratura" => mW, "controlabilidad_semilla" => ref["controlabilidad"],
                                       "observabilidad_cuadratura" => mM, "observabilidad_semilla" => ref["observabilidad"],
                                       "error_rel_controlabilidad" => eW, "error_rel_observabilidad" => eM,
-                                      # B6 del ataque a §5: el n de ESTE caso, cableado en
-                                      # `nominales_semilla`, no el global de `Par()`.
+                                      # El n de este caso, no el de Par().
                                       "n" => nom.p.n)
     end
     out["error_rel_maximo"] = peor
@@ -236,6 +211,7 @@ function contraste_semilla(sem = semilla_lectura(), p = Par())
     out
 end
 
+# Nominal óptima, gramianos y su condicionamiento, degeneración en P = 0, energía mínima y LQ de seguimiento.
 function objetivo2(p::Par = Par(); N = N_OBJ2)
     opt = optimizar(p, N)
     nom = nominal_optima(p, opt.x)
@@ -314,10 +290,8 @@ function objetivo2(p::Par = Par(); N = N_OBJ2)
     end
     nulo = lazo_cerrado(nom, P; R = p.wq)
 
-    # Verificación de Riccati con los pesos del problema. Ver «criterios_retirados» más abajo: el
-    # criterio «definida positiva en todo [0,T]» que el plan fijó es imposible con Qf = diag(w_T, 0),
-    # y lo es por la estructura del costo. Lo que sí se verifica es más fuerte: ⪰ 0 en todo el
-    # horizonte, la condición de borde exacta, y el residual de la propia EDO.
+    # Con Qf = diag(wT, 0), P(T) es singular por construcción y P no puede ser definida positiva en todo [0, T].
+    # Se verifica P ⪰ 0, la condición de borde exacta y el residuo de la propia EDO.
     tsP = range(0.0, p.T, length = 21)
     λminP = [minimum(eigvals(Symmetric(Matrix(P(t))))) for t in tsP]
     borde_P = maximum(abs.(P(p.T) - Qf))
@@ -334,11 +308,8 @@ function objetivo2(p::Par = Par(); N = N_OBJ2)
         "W_simetrica_definida_positiva" => maximum(abs.(W - W')) < 1e-12 * max(1.0, maximum(abs, W)) && minimum(λW) > 0,
         "M_simetrica_definida_positiva" => maximum(abs.(M - M')) < 1e-12 * max(1.0, maximum(abs, M)) && minimum(λM) > 0,
         "energia_minima_alcanza_el_blanco" => maximum(abs.(zT - Z_BLANCO)) < 1e-8 * maximum(abs, Z_BLANCO),
-        # ⚠️ B2 del ataque a §5 (15-nov): esto NO es un cruce. `energia_minima` devuelve dot(z, W\z) y
-        # `forma` es la misma expresión, así que coinciden bit a bit y el criterio pasa incluso con
-        # W = I. Se conserva como control de identidad —que las dos llamadas a
-        # `gramiano_controlabilidad` devuelvan los mismos bits— y el nombre lo dice. El cruce con
-        # contenido es `energia_igual_a_la_cuadratura_del_control`, abajo.
+        # Esto no es un cruce: energia_minima devuelve la misma expresión zᵀW⁻¹z y coincide bit a bit. El cruce con
+        # contenido es el siguiente, contra la cuadratura del control.
         "energia_y_forma_cuadratica_identidad_no_cruce" => abs(em.energia - forma) < 1e-9 * abs(em.energia),
         "energia_igual_a_la_cuadratura_del_control" => abs(energia_cuadratura - em.energia) < 1e-8 * abs(em.energia),
         "degeneracion_en_reposo_rango_1" => kr.rango == 1 && orp.rango == 1,
@@ -354,7 +325,7 @@ function objetivo2(p::Par = Par(); N = N_OBJ2)
             "J" => opt.fun, "exito_ipopt" => opt.exito, "status" => string(opt.status), "iteraciones" => opt.iter,
             "cotas_fijadas" => opt.fijadas, "q" => opt.x, "ell_T" => nom.x(p.T)[1], "P_T" => nom.x(p.T)[2]),
         "gramiano_controlabilidad" => Dict{String, Any}("W" => filas(W), "lambda" => λW, "cond" => cond2(λW)),
-        # B1 del ataque a §5: el segundo camino SOBRE ESTA nominal, que es la que §5.2 publica.
+        # Gramianos por Lyapunov sobre la nominal del óptimo, que es la que se reporta.
         "cruce_lyapunov_en_la_nominal" => Dict{String, Any}(
             "lambda_W_lyapunov" => cruce.lambda_W_lyapunov,
             "lambda_M_lyapunov" => cruce.lambda_M_lyapunov,
@@ -388,9 +359,8 @@ function objetivo2(p::Par = Par(); N = N_OBJ2)
                                               "lambda_min_en_la_grilla" => λminP, "borde_max_abs_P_T_menos_Qf" => borde_P,
                                               "residual_edo_max" => residual_P,
                                               "experimento" => exp_lq),
-        # Un criterio fijado el 14-nov en el plan que NO se cumple, con su razón medida. No se borra y no
-        # se le baja el umbral: se retira del conjunto que detiene la corrida y se reemplaza por tres que
-        # son la verificación correcta y más exigente (⪰ 0, borde exacto, residual de la EDO).
+        # P definida positiva en todo [0, T] no se cumple, por la estructura del costo: queda registrado con su razón
+        # y lo reemplazan los criterios de arriba.
         "criterios_retirados" => Dict{String, Any}("riccati_definida_positiva" => Dict{String, Any}(
             "cumplido" => all(λminP .> 0), "fijado_en" => "plan 2026-11-14, F1 tarea 1.4 paso 1",
             "razon" => "Imposible con los pesos del problema, y por estructura del costo, no por el código: " *

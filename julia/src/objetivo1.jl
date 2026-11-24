@@ -1,7 +1,11 @@
+# Objetivo 1: la dinámica sin control y con caudal constante, en un barrido de n, η y U.
 const NS_DINAMICA = (1, 2, 3)
 const ETAS = (0.0, 0.2, 1.0)
 const US = (0.0, 0.5, 1.0)
 
+# Para cada caso se mide monotonía de ℓ, positividad de P, la cota P ≤ (S0 + Ut)/c y el balance de volumen
+# S = S0 + Ut - η∫ℓP. Con η = 0 y U = 1 se comparan las pendientes log-log tardías de ℓ y P con las teóricas,
+# y con P0 = 0 y U = 0 se comprueba que (ℓ0, 0) es equilibrio.
 function objetivo1()
     base = Par()
     barrido, tendencias, equilibrios = Dict{String, Any}[], Dict{String, Any}[], Dict{String, Any}[]
@@ -50,18 +54,15 @@ function objetivo1()
                       "tendencias" => tendencias, "equilibrios" => equilibrios, "criterios" => criterios)
 end
 
-# ---- §3.1 · el largo límite sin inyección, y los datos de la figura F0 --------------------------
-# §3.1 deriva que con q ≡ 0 la fractura se detiene donde S se anula, y que ese largo límite es la única
-# raíz de n·η·∫ s^(1-n/2)(c+s²)^(n-1) ds = S₀^n, con la cota explícita [ℓ₀^(3n/2) + (3/2η)S₀^n]^(2/(3n))
-# y con IGUALDAD en n = 1. `ell_limite` es esa raíz, por bisección sobre la integral: vivía en
-# `test/pruebas.jl`, y subió al paquete cuando la figura la necesitó — dos implementaciones de la misma
-# raíz, una en la prueba y otra en la figura, se habrían separado sin que nada avisara.
+# Largo límite sin inyección. Con U ≡ 0 la fractura se detiene cuando S se anula, en la única raíz ℓ∞ de
+# n·η·∫ s^(1-n/2)(c+s²)^(n-1) ds = S0^n (integral de ℓ0 a ℓ∞). Se busca por bisección; la usan la figura y las pruebas.
 function ell_limite(par)
     S0 = (par.c + par.ℓ0^2) * par.P0
     g(L) = par.n * par.η * quadgk(s -> s^(1 - par.n / 2) * (par.c + s^2)^(par.n - 1), par.ℓ0, L)[1] - S0^par.n
     lo = hi = par.ℓ0
     k = 0
-    while g(hi) < 0 && k < 200          # sin tope, un η = 0 colgaría la suite: con η = 0 no hay raíz
+    # Con η = 0 no hay raíz, y sin tope este bucle no terminaría.
+    while g(hi) < 0 && k < 200
         hi *= 1.5
         k += 1
     end
@@ -73,25 +74,20 @@ function ell_limite(par)
     ((lo + hi) / 2, S0)
 end
 
+# Cota explícita [ℓ0^(3n/2) + (3/2η)S0^n]^(2/(3n)) del largo límite, que es igualdad en n = 1.
 cota_ell_limite(par, S0) = (par.ℓ0^(3par.n / 2) + 3 / (2par.η) * S0^par.n)^(2 / (3par.n))
 
-# Las dos familias del plano de fase (ℓ, P) que §3.1 describe, en vectores planos.
-#  · Libre (U ≡ 0), cuatro presiones iniciales hasta TAU_LARGO_OBJ1: cada trayectoria termina en su
-#    equilibrio (ℓ_∞, 0), y la figura marca ahí la raíz de la integral Y la cota explícita, de modo que
-#    DIBUJA las dos afirmaciones de §3.1 en vez de ilustrarlas. La malla de τ es logarítmica porque el
-#    codo está en los primeros instantes (ver el método de `simular` con malla dada).
-#  · Forzada (U constante), cuatro caudales hasta T: ninguna tiene equilibrio, y el umbral U* —la raíz
-#    de ℓ(T; U) − ℓd— separa los caudales que alcanzan el objetivo de los que no. Existe porque
-#    ℓ(T; ·) crece; que crezca se mide en la suite, no se supone.
+# Datos del plano de fase (ℓ, P) de la figura del objetivo 1, en dos familias. Libre (U ≡ 0), cuatro presiones
+# iniciales: cada trayectoria termina en su equilibrio (ℓ∞, 0), y la figura marca ahí la raíz y la cota.
+# Forzada (U constante), cuatro caudales: ninguna tiene equilibrio, y el umbral U*, raíz de ℓ(T; U) - ℓd,
+# separa los caudales que alcanzan el objetivo de los que no. Existe porque ℓ(T; ·) crece, y eso lo miden las pruebas.
 const P0S_OBJ1 = (0.15, 0.3, 0.6, 1.0)
 const US_OBJ1 = (0.0, 0.6, 1.2, 2.0)
 const TAU_LARGO_OBJ1 = 200.0
 const NPTS_OBJ1 = 201
 
-# La malla de la familia libre: uniforme hasta T, donde está el codo del plano de fase, y logarítmica
-# de ahí a TAU_LARGO_OBJ1, donde la trayectoria solo se arrastra al equilibrio. Con τ uniforme en todo
-# el horizonte, el codo quedaba con dos puntos; con τ logarítmico desde 1e-3, ochenta puntos caían
-# donde ℓ no se ha movido ni 1e-4 y el archivo pesaba 64 KB de coordenadas repetidas.
+# Malla de la familia libre: uniforme hasta T, donde está el codo del plano de fase, y logarítmica de ahí a
+# TAU_LARGO_OBJ1, donde la trayectoria solo se arrastra al equilibrio.
 malla_libre_obj1(p) = vcat(range(0.0, p.T, length = 81),
                            exp10.(range(log10(1.2 * p.T), log10(TAU_LARGO_OBJ1), length = 120)))
 

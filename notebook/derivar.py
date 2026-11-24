@@ -1,26 +1,15 @@
 #!/usr/bin/env python3
-"""Arma notebook/fractura.ipynb, el notebook autocontenido que se entrega, a partir del paquete Fractura (julia/).
-
-El código vive una sola vez, en el paquete: cada celda de código es, tal cual, un archivo de julia/src/ o de
-julia/test/, o un bloque «# %% <id>» de julia/regenerar.jl, y las versiones de la celda Entorno salen del [compat] de
-julia/Project.toml. ESQUELETO fija el orden de las celdas y los títulos. Sobre ese notebook base van los cambios de la
-entrega.
-
-Uso, desde cualquier carpeta:  python3 -I notebook/derivar.py [salida.ipynb]
-Por defecto escribe notebook/fractura.ipynb sin salidas. Se ejecuta aparte, en una carpeta vacía nueva (jupyter
-nbconvert --to notebook --execute --inplace), y ese notebook ejecutado, con sus salidas y figuras, reemplaza al
-de notebook/: es el que se entrega.
-
-Diferencias con el paquete, y nada más:
-- en vez del entorno del paquete, la celda Entorno fija las mismas versiones en un entorno temporal;
-- todo lo que escribe va a salidas/, junto al notebook (nunca a la raíz del repositorio, RAIZ);
-- las tres figuras del reporte también se dibujan con Plots + GR, en pantalla y en salidas/figuras/*.png;
-- la última celda compara las cifras recién calculadas con las del reporte (avance/reporte/cifras.tex, copiadas
-  aquí) y da error si alguna difiere.
-
-Cada cambio es un reemplazo anclado por contenido: la celda se ubica por un texto que aparece en una sola celda, y el
-texto reemplazado tiene que aparecer exactamente una vez en ella. Si no, aborta sin escribir nada.
-"""
+# Arma notebook/fractura.ipynb, el notebook autocontenido de la entrega de avance, a partir del paquete
+# Fractura (julia/). Cada celda de código es, tal cual, un archivo de julia/src/ o julia/test/ o un bloque
+# «# %% <id>» de julia/regenerar.jl; las versiones de la celda Entorno salen del [compat] de julia/Project.toml.
+# ESQUELETO fija el orden y los títulos de las celdas, y sobre ese notebook base van los cambios de la entrega.
+# Uso, desde cualquier carpeta: python3 -I notebook/derivar.py [salida.ipynb]
+# Escribe el notebook sin salidas; se ejecuta aparte, en una carpeta vacía nueva, con
+# jupyter nbconvert --to notebook --execute --inplace.
+# Los cambios respecto del paquete: la celda Entorno fija las versiones en un entorno temporal, todo lo que
+# se escribe va a salidas/, las tres figuras del reporte también se dibujan con Plots y la última celda
+# compara las cifras con las del reporte de avance.
+# Cada cambio es un reemplazo anclado por contenido; si el ancla no es única, aborta sin escribir nada.
 import hashlib
 import tomllib
 import json
@@ -136,14 +125,14 @@ def entorno():
     return ENTORNO.format(versiones=", ".join(v[:3]) + ",\n                   " + ", ".join(v[3:]))
 
 
+# Los bloques «# %% <id>» de julia/regenerar.jl, sin los saltos de línea del final.
 def corridas():
-    """Los bloques «# %% <id>» de julia/regenerar.jl, sin los saltos de línea del final."""
     partes = re.split(r"^# %% (c\d+)\n", (JL / "regenerar.jl").read_text(encoding="utf-8"), flags=re.M)
     return {partes[k]: partes[k + 1].rstrip("\n") for k in range(1, len(partes), 2)}
 
 
+# El notebook armado desde el paquete, antes de los cambios de la entrega.
 def base():
-    """El notebook armado desde el paquete, antes de los cambios de la entrega."""
     bloques = corridas()
     usados = [i for i, x in ESQUELETO if x == "corrida"]
     if sorted(usados) != sorted(bloques):
@@ -171,13 +160,13 @@ def insertar_despues(nb, ancla, *nuevas):
     nb["cells"][i + 1:i + 1] = list(nuevas)
 
 
+# Literal de string de Julia: el escape de JSON sirve salvo por $, que en Julia interpola.
 def jl(s):
-    """Literal de string de Julia: el escape de JSON sirve salvo por $, que en Julia interpola."""
     return json.dumps(s, ensure_ascii=False).replace("$", "\\$")
 
 
+# Las cifras de cifras.tex como pares (nombre, valor), comprobando que reconstruyen el archivo exacto.
 def referencia():
-    """Las cifras de cifras.tex como pares (nombre, valor), con ida y vuelta exacta al texto."""
     t = CIFRAS.read_text(encoding="utf-8")
     cabecera, _, cuerpo = t.partition("\n")
     if not cabecera.startswith("% Escrito por"):
@@ -336,14 +325,13 @@ def main():
                "# Antes de sobrescribir avance/resultados/<n>.json se compara lo recién calculado con lo que hay en disco",
                "# Antes de sobrescribir salidas/resultados/<n>.json se compara lo recién calculado con lo que hay en disco")
     reemplazar(nb, "function regresion(nombre, o)",
-               "Si el json no existe no hay regresión: así se\n# acepta un cambio de modelo, borrando el json a propósito.",
-               "En la primera corrida no hay json y la regresión\n"
-               "# queda OMITIDA; la comparación contra el reporte entregado es la de la última celda.")
+               "Si el json\n# no existe no hay regresión: así se acepta un cambio de modelo, borrando el json a propósito.",
+               "En la primera corrida\n# no hay json y la regresión queda omitida; la comparación contra el reporte entregado es la de la última celda.")
     reemplazar(nb, "function regresion(nombre, o)",
                'const RES = joinpath(RAIZ, "avance", "resultados")',
                'const RES = joinpath(SALIDAS, "resultados")\nmkpath(RES)')
     reemplazar(nb, "function regresion(nombre, o)",
-               '# `final/` es la entrega final: json, figuras e informe nuevos. `avance/` está entregado y no se toca.\n'
+               '# Los resultados de la entrega final van aparte, en final/resultados; los del avance no se tocan.\n'
                'const RES_FINAL = joinpath(RAIZ, "final", "resultados")',
                '# En el repositorio esto es final/resultados (la entrega final); en el notebook todo va a salidas/.\n'
                'const RES_FINAL = joinpath(SALIDAS, "resultados-final")')

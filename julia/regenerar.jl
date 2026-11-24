@@ -1,7 +1,7 @@
-# Regenera los resultados del avance —json de los objetivos 1, 3 y 4, semilla, cifras.tex y figuras del reporte— con
-# el paquete Fractura. Uso, desde la raíz del repositorio: julia --project=julia julia/regenerar.jl
-# Cada bloque «# %% <id>» es, tal cual, una celda del notebook que se entrega (notebook/derivar.py los lee de aquí).
-# Las pruebas no corren aquí: julia --project=julia julia/test/runtests.jl
+# Regenera los resultados del avance: json de los objetivos 1, 3 y 4, semilla, cifras y figuras del reporte.
+# Uso, desde la raíz del repositorio: julia --project=julia julia/regenerar.jl
+# Cada bloque «# %% <id>» es una celda del notebook de avance; notebook/derivar.py los lee de acá, así que
+# esas marcas no se tocan. Las pruebas van aparte, en julia/test/runtests.jl.
 using Fractura, JSON, Test
 
 isdir(RES) || error("no está $RES")

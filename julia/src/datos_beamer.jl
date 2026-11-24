@@ -1,6 +1,6 @@
-# Curvas del Beamer animado del avance (avance/video/beamer/datos/*.csv), desde los mismos vectores que dibujan las
-# figuras del reporte y con el mismo formato %.6g, así que cada CSV repite las coordenadas de su figura. El Beamer los
-# lee con pgfplotstable (comun.tex). Reemplaza a avance/video/beamer/extraer.py, que los sacaba de las figuras.
+# Curvas del Beamer animado del avance (avance/video/beamer/datos/*.csv), desde los mismos vectores que
+# dibujan las figuras del reporte y con el mismo formato %.6g, así que cada CSV repite las coordenadas de
+# su figura. El Beamer las lee con pgfplotstable.
 const DATOS_BEAMER = joinpath(RAIZ, "avance", "video", "beamer", "datos")
 
 function csv_beamer(archivo, cabecera, columnas...)

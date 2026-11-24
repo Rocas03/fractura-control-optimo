@@ -1,20 +1,17 @@
-# La atribución del 1e-11 del cruce de Lyapunov sobre la nominal del óptimo (§4.4 del informe), medida
-# dentro de la cadena para que sus cifras salgan como macros (\cfcru...) y no tipeadas a mano.
-#
-# Es la medición de docs/marco/ataque-s5/ (CRUCE-LYAPUNOV-MEDIDO.md; scripts medir/piso.jl, cruce_nudos.jl,
-# escala.jl, estado_rk4.jl) reunida en una sola función: el mismo cruce que `cruce_lyapunov_nominal`, con el
-# integrador escrito a mano para fijar reltol/abstol y los tstops desde afuera, y con el número de pasos de Ψ.
-# Control de reproducción: el caso «óptimo, tal cual, reltol 1e-12» tiene que dar BIT A BIT el
-# `error_rel_maximo` publicado en objetivo2_lineal.json; si no, se detiene (la medición no sería la del json).
-#
-# Uso suelto, desde la raíz:  julia/bin/jl --project=julia julia/cruce_atribucion.jl
-# Dentro de la cadena: julia/regenerar_final.jl lo incluye y escribe final/resultados/cruce_lyapunov_atribucion.json.
+# Atribución del error de 1e-11 del cruce de Lyapunov sobre la nominal del óptimo (sección 4.4 del
+# informe), calculada dentro de la cadena para que sus cifras salgan como macros \cfcru... y no tipeadas.
+# Es el mismo cruce que `cruce_lyapunov_nominal`, con el integrador escrito acá para fijar reltol, abstol y
+# tstops desde afuera, y contando los pasos del propagador Ψ. El caso «óptimo, reltol 1e-12» tiene que
+# reproducir bit a bit el `error_rel_maximo` de objetivo2_lineal.json; si no, se detiene.
+# Suelto, desde la raíz: julia/bin/jl --project=julia julia/cruce_atribucion.jl. Además lo incluye
+# julia/regenerar_final.jl.
 import Fractura
 using LinearAlgebra, StaticArrays, QuadGK, OrdinaryDiffEqVerner, JSON
-# `F` global y const, como en medir/piso.jl: con `F = Fractura` local dentro de las funciones el cruce
-# da otro número (2,79e-11 contra 2,68e-11, medido el 19-nov) y el control de reproducción falla.
+# `F` global y const: con un alias local dentro de las funciones el cruce da otro número y el control de
+# reproducción falla.
 const F = Fractura
 
+# Integra con Vern9 a las tolerancias pedidas, con tstops opcionales en los nudos.
 function _integ_cruce(g, y0, tspan; rtol, atol, nudos = Float64[])
     kw = isempty(nudos) ? NamedTuple() : (tstops = nudos,)
     s = solve(ODEProblem{false}((y, _, t) -> g(y, t), y0, tspan), Vern9();
@@ -23,6 +20,8 @@ function _integ_cruce(g, y0, tspan; rtol, atol, nudos = Float64[])
     s
 end
 
+# Error relativo máximo entre los valores propios de los gramianos de controlabilidad y observabilidad
+# calculados por Lyapunov y por cuadratura del propagador, más los pasos de Ψ.
 function _cruce(nom; T = nom.T, rtol, atol, nudos = Float64[])
     fW = function (Y, t)
         AB = F.matrices_lineales(nom, t); Wt = SMatrix{2, 2}(Y)
@@ -48,6 +47,8 @@ function _cruce(nom; T = nom.T, rtol, atol, nudos = Float64[])
     (emax = max(eW, eM), pasos = length(Ψs.t), lambda_max_W = maximum(abs, λWq))
 end
 
+# Seis casos: la nominal del óptimo con y sin tstops en los nudos y a reltol 1e-14, la trayectoria suave con
+# y sin tstops, y la misma ley de control con el estado integrado por Vern9.
 function cruce_atribucion()
     p = F.Par(); N = F.N_OBJ2
     q = F.optimizar(p, N).x
@@ -79,8 +80,8 @@ function cruce_atribucion()
         "e_max" => Dict("optimo" => A.emax, "optimo_tstops" => B.emax, "suave" => D.emax,
                         "suave_tstops" => E.emax, "optimo_reltol_menos_catorce" => A14.emax,
                         "misma_ley_estado_vern" => V.emax),
-        # Pasos del propagador Ψ (no de las EDO de Lyapunov). Con tstops y a reltol 1e-14 se guardan desde el 19-nov
-        # (juez B1/M1): con nudos el óptimo BAJA de pasos, así que su ganancia no es refinamiento.
+        # Pasos del propagador Ψ, no de las EDO de Lyapunov: con tstops el óptimo usa menos pasos, así que lo
+        # que gana no viene de refinar.
         "pasos" => Dict("optimo" => A.pasos, "suave" => D.pasos, "optimo_tstops" => B.pasos,
                         "suave_tstops" => E.pasos, "optimo_reltol_menos_catorce" => A14.pasos),
         "razon" => Dict("brecha_optimo_suave" => A.emax / D.emax,

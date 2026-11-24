@@ -1,5 +1,8 @@
+# Método directo: el caudal U es constante en N tramos iguales de [0, T] y se optimiza con Ipopt,
+# con el gradiente exacto del esquema discreto calculado por el adjunto.
 malla(p, N) = range(0.0, p.T, length = N + 1)
 
+# Integra estado y costo corriente tramo a tramo; devuelve J = Φ + ∫L y los tramos con su salida densa.
 function avance(q, p)
     t = malla(p, length(q))
     m = cld(PASOS_RK, length(q))
@@ -13,6 +16,8 @@ function avance(q, p)
     Φ(y, p) + y[3], identity.(tramos)
 end
 
+# Integra hacia atrás ζ' = -∂fᵀζ + ∂L desde ζ(T) = -∂Φ, con el mismo RK4. La tercera componente acumula
+# -∂H/∂U = wq U - ζP/D en cada tramo, que es la derivada de J respecto de ese tramo del caudal.
 function adjunto(q, p, tramos)
     t = malla(p, length(q))
     m = cld(PASOS_RK, length(q))
@@ -36,6 +41,8 @@ end
 costo_y_gradiente(q, p) = (r = avance(q, p); (r[1], adjunto(q, p, r[2])[1]))
 gradiente(q, p) = costo_y_gradiente(q, p)[2]
 
+# El problema como NLPModel para Ipopt: el caudal es q = Bθ, con B la identidad o una base (por ejemplo, rampas),
+# y cotas 0 ≤ θ ≤ qmax. Ipopt aproxima el Hessiano con L-BFGS.
 struct Directo{M} <: AbstractNLPModel{Float64, Vector{Float64}}
     meta::NLPModelMeta{Float64, Vector{Float64}}
     counters::Counters
@@ -52,6 +59,8 @@ const IPOPT = (print_level = 0, tol = 1e-12, limited_memory_max_history = 30, ma
 
 const TOL_ACTIVA = 1e-6
 
+# Ipopt es de punto interior y deja las cotas activas un poco adentro; las que están a menos de TOL_ACTIVA y cuyo
+# gradiente empuja hacia afuera se llevan justo a la cota.
 function fijar_activas(θ, g, hi)
     arriba = findall(k -> 0 < hi - θ[k] ≤ TOL_ACTIVA && g[k] < 0, eachindex(θ))
     abajo = findall(k -> 0 < θ[k] ≤ TOL_ACTIVA && g[k] > 0, eachindex(θ))
@@ -70,6 +79,8 @@ end
 
 optimizar(p, N; q0 = zeros(N), kw...) = ipopt_directo(p, I(N), q0; kw...)
 
+# Chequeos de optimalidad de un control discreto: norma del gradiente, H casi constante en el tiempo y la brecha
+# entre q y U* = proy(ζP / (wq D)) en el punto medio de cada tramo.
 function diagnosticos(q, p)
     t = malla(p, length(q))
     J, tramos = avance(q, p)

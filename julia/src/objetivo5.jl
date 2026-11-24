@@ -1,58 +1,44 @@
-# F4 · Objetivo 5, el resultado publicable: el control óptimo del programa de carga en el modelo de
-# daño por gradiente AT2, con sus criterios y las cifras que entran al póster y al informe.
-#
-# Es el análogo en EDP del objetivo 3 (Pontryagin en el modelo reducido), y la razón por la que el
-# objetivo 5 dejó de ser «se trasladaría»: acá hay un gradiente verificado contra diferencias finitas,
-# un programa de carga óptimo que coincide con un patrón cerrado, y —el resultado que vale— el punto
-# donde la aplicación carga→estado NO es diferenciable, medido como un quiebre y no como truncamiento.
-#
-# Los criterios son los del plan y de las pruebas 4.1/4.2, sin retocar: orden de convergencia ≥ 0,85,
-# gradiente a 1e-5 relativo, seguimiento bajo el 5 % del blanco. Lo que el plan NO pedía —el factor
-# entre las derivadas laterales, el orden observado, la invariancia de escala— va en «lectura», que es
-# lo que se lee del resultado y puede salir para cualquier lado sin que el criterio falle.
-#
-# Dos barras, y la distinción importa:
-#  · la de CONTROL (defecto en el centro, α = 0 en los extremos) es la del experimento de control y la
-#    de la figura: el daño localiza en el defecto, así que α(x,t) tiene forma y no es una constante;
-#  · la HOMOGÉNEA es la única con solución cerrada, así que es el control analítico del forward y la
-#    que reproduce el 0,024 % de la prueba 4.2.
+# Objetivo 5 (C5): control óptimo del programa de carga en el modelo de daño AT2, con sus criterios y las
+# cifras que van al póster y al informe. Es el análogo en EDP de Pontryagin en el modelo reducido: un
+# gradiente verificado contra diferencias finitas, un programa óptimo que coincide con uno cerrado y el
+# punto donde la aplicación carga → estado no es diferenciable, medido como un quiebre.
+# `criterios` son las condiciones que tienen que cumplirse; `lectura` es lo que se lee del resultado, que
+# puede salir para cualquier lado sin que falle nada.
+# Hay dos barras: la de control (defecto al centro, α = 0 en los extremos), donde el daño se localiza y
+# α(x, t) tiene forma, y la homogénea, la única con solución cerrada, que sirve de control del forward.
 
-# ---- los experimentos, fijados acá y no en el cuerpo de las funciones -----------------------------
+# Los experimentos, fijados acá y no dentro de las funciones.
 
 const P_AT2_CONTROL = ParAT2(; L = 1.0, ℓ = 0.25, N = 60, defecto = 0.4, ancho = 0.1, fija_borde = true)
 const BLANCOS_AT2 = collect(range(0.02, 0.12; length = 6))          # ∫α dx pedido, etapa por etapa
 const ITER_AT2 = 300
 const MALLA_AT2 = (; L = 1.0, ℓ = 0.25, defecto = 0.4, ancho = 0.1, fija_borde = true)
 const NS_MALLA_AT2 = (40, 80, 160, 320)
-const KS_ETAPAS_AT2 = (1, 2, 3, 5, 10)              # etapas iguales hasta 0,9 ε_c L (B3 del ataque)
+const KS_ETAPAS_AT2 = (1, 2, 3, 5, 10)              # etapas iguales hasta 0,9 ε_c L
 const RAMPA_AT2 = (desde = 0.1, hasta = 1.3, etapas = 30)           # carga en unidades de ε_c L
 const P_QUIEBRE_AT2 = ParAT2(; L = 1.0, ℓ = 0.3, N = 40, defecto = 0.0)
-const CARGA_QUIEBRE_AT2 = [0.4, 0.6, 0.8, 0.8, 0.9]                 # la etapa 4 SOSTIENE la 3
+const CARGA_QUIEBRE_AT2 = [0.4, 0.6, 0.8, 0.8, 0.9]                 # la etapa 4 repite la carga de la 3
 const OBJ_QUIEBRE_AT2 = (objetivo = 0.25, omega = 0.2)
 const TAUS_QUIEBRE_AT2 = (1e-5, 1e-6, 1e-7)
 const P_GRAD_AT2 = ParAT2(; L = 1.0, ℓ = 0.3, N = 40, defecto = 0.0)
 const P_HOMOGENEA_AT2 = ParAT2(; L = 1.0, ℓ = 0.3, N = 32, defecto = 0.0)
-# El rango de la prueba 4.1, sin retocar: donde la rama homogénea ES la solución del esquema.
+# Rango donde la rama homogénea es la solución del esquema.
 const RAMA_HOMOGENEA_AT2 = [0.2, 0.5, 0.8, 1.0, 1.4]
-# El escaneo que busca el salto. El punto del salto DEPENDE del paso de carga —con 25 etapas salta
-# antes de 2,5 ε_c y con 47 aguanta hasta 2,35—, así que el número va al json junto con su rampa.
+# Escaneo que busca el salto a daño total. El punto del salto depende del paso de carga, así que va al
+# json junto con su rampa.
 const ETAPAS_ESCANEO_AT2 = 47
 
 rampa_at2(q) = collect(range(RAMPA_AT2.desde, RAMPA_AT2.hasta; length = RAMPA_AT2.etapas)) .* eps_c(q) .* q.L
 
-"""
-    pico_at2(q)
-
-La carga de ruptura estructural: el máximo de σ sobre una rampa monótona hasta 1,3 ε_c L. Es la
-cantidad que converge en malla y la que escala como ℓ^(-1/2).
-"""
+# Carga de ruptura estructural: el máximo de σ en una rampa monótona hasta 1,3 ε_c L. Es lo que converge
+# en malla y lo que escala como ℓ^(-1/2).
 function pico_at2(q::ParAT2)
     s = resolver_at2(rampa_at2(q), q)
     k = argmax(s.sigma)
     (sigma = s.sigma[k], etapa = k, carga = s.carga[k], kkt = s.kkt, alpha_final = s.alpha[end])
 end
 
-"Convergencia en malla del pico: razones de las diferencias sucesivas y el orden que implican."
+# Convergencia en malla del pico: razones entre diferencias sucesivas y el orden que implican.
 function orden_malla_at2(; ns = NS_MALLA_AT2)
     ps = [pico_at2(ParAT2(; MALLA_AT2..., N = n)) for n in ns]
     σ = [r.sigma for r in ps]
@@ -62,12 +48,8 @@ function orden_malla_at2(; ns = NS_MALLA_AT2)
      orden = minimum(log2.(razones)), kkt = maximum(r.kkt for r in ps))
 end
 
-"""
-    invariancia_escala_at2()
-
-σ_pico·√ℓ con L/ℓ, h/ℓ y ancho/ℓ fijos: la ley ℓ^(-1/2) del AT2, medida sin ajustar ninguna recta.
-`sin_raiz` es el control de mutación — sin el √ℓ los dos números difieren un 29 %.
-"""
+# σ_pico·√ℓ con L/ℓ, h/ℓ y ancho/ℓ fijos: la ley ℓ^(-1/2) del AT2, sin ajustar ninguna recta.
+# `sin_raiz` es el control de mutación: sin el √ℓ los dos picos difieren claramente.
 function invariancia_escala_at2()
     a = ParAT2(; L = 1.0, ℓ = 0.25, defecto = 0.4, ancho = 0.1, N = 80, fija_borde = true)
     b = ParAT2(; L = 2.0, ℓ = 0.50, defecto = 0.4, ancho = 0.2, N = 80, fija_borde = true)
@@ -77,24 +59,18 @@ function invariancia_escala_at2()
      sin_raiz = abs(pa - pb) / pa)
 end
 
-"""
-    rama_homogenea_at2(q)
-
-El control analítico del forward: en la barra homogénea con cotas naturales la rama uniforme es punto
-estacionario exacto, así que el solver tiene que reproducir α(ε) = ε²/(ε²+ε_c²) y σ(ε) = Eε(1-α)², y
-el pico σ_c = (3√3/16)√(EG_c/ℓ), a tolerancia de solver y no de discretización.
-"""
+# Control analítico del forward: en la barra homogénea con cotas naturales la rama uniforme es punto
+# estacionario exacto, así que el solver tiene que reproducir α(ε), σ(ε) y el pico σ_c a tolerancia de
+# solver, no de discretización.
 function rama_homogenea_at2(q::ParAT2 = ParAT2(; L = 1.0, ℓ = 1.0, N = 40, defecto = 0.0))
     εs = RAMA_HOMOGENEA_AT2 .* eps_c(q)
     s = resolver_at2(εs .* q.L, q)
     eα = maximum(abs(maximum(s.alpha[k]) - alpha_homogenea(εs[k], q)) for k in eachindex(εs))
     eσ = maximum(abs(s.sigma[k] - sigma_homogenea(εs[k], q)) for k in eachindex(εs))
     pk = resolver_at2([eps_pico_homogenea(q) * q.L], q)
-    # Hasta dónde vale la comparación, MEDIDO y no supuesto: la rama homogénea es un punto
-    # estacionario a toda ε, pero deja de ser el mínimo que el esquema sigue. Con una rampa larga la
-    # barra SALTA a daño total (α en amax) y desde ahí σ ya no es σ(ε) de la rama; medido el 14-nov
-    # con ℓ = L: a 1,4 ε_c la rama se reproduce a 1e-13 y a 2,5 ε_c α vale 0,999999 contra 0,862 de la
-    # rama. El criterio se mide en el rango pre-registrado de la prueba 4.1, y el salto se reporta.
+    # La rama homogénea es punto estacionario para todo ε, pero deja de ser el mínimo que sigue el esquema:
+    # con una rampa larga la barra salta a daño total y σ ya no es la de la rama. Por eso el criterio se
+    # mide en el rango fijado arriba y el salto se reporta aparte.
     largo = collect(range(0.2, 2.5; length = ETAPAS_ESCANEO_AT2)) .* eps_c(q)
     sl = resolver_at2(largo .* q.L, q)
     k = findfirst(a -> maximum(a) >= q.amax - 1e-9, sl.alpha)
@@ -107,14 +83,9 @@ function rama_homogenea_at2(q::ParAT2 = ParAT2(; L = 1.0, ℓ = 1.0, N = 40, def
      ultima_que_calza = ult === nothing ? NaN : largo[ult] / eps_c(q))
 end
 
-"""
-    gradiente_contra_fd_at2()
-
-El gradiente adjunto contra diferencias finitas centradas en tres direcciones, donde el conjunto
-activo no cambia: ÉSTA es la medición que decide si el objetivo 5 existe. `mutacion` es el gradiente
-sin el término de rango uno del Hessiano reducido —el que saldría de «derivar el solver»—, que sale
-con el signo cambiado.
-"""
+# Gradiente adjunto contra diferencias finitas centradas en tres direcciones, donde el conjunto activo no
+# cambia. `mutacion` es el gradiente sin el término de rango uno del Hessiano reducido, que sale con el
+# signo cambiado.
 function gradiente_contra_fd_at2()
     p = P_GRAD_AT2
     εc = eps_c(p)
@@ -139,17 +110,10 @@ function gradiente_contra_fd_at2()
                  error = abs(dot(rs.grad, dir) - fd) / max(1.0, abs(fd))))
 end
 
-"""
-    quiebre_at2()
-
-El resultado del objetivo 5: en una etapa que SOSTIENE la carga anterior, α queda en la cota de
-irreversibilidad con multiplicador cero, y las derivadas laterales del costo respecto de esa carga
-difieren por un factor grande que NO se mueve al bajar τ cien veces. Es un quiebre, no truncamiento:
-la aplicación carga→estado no es diferenciable, el adjunto da la derivada de la rama, y de ahí que en
-el PMP clásico no esté disponible.
-⚠️ CORREGIDO 14-nov: antes decía «en EDP solo se tenga C-estacionariedad». Atribución FALSA: ese
-nombre es de Hintermüller-Kopacka 2009, no de Neitzel-Wick-Wollner. Ver docs/marco/objetivo5-phase-field.md § 4.2.
-"""
+# El quiebre: en una etapa que repite la carga anterior, α queda en la cota de irreversibilidad con
+# multiplicador cero, y las derivadas laterales del costo respecto de esa carga difieren en un factor que
+# no se mueve al bajar τ cien veces. No es error de truncamiento: ahí la aplicación carga → estado no es
+# diferenciable, el adjunto da la derivada de la rama y el principio del máximo clásico no está disponible.
 function quiebre_at2()
     p = P_QUIEBRE_AT2
     εc = eps_c(p)
@@ -168,17 +132,14 @@ function quiebre_at2()
                          "razon" => izq / der, "centrada" => (der + izq) / 2))
     end
     razones = [t["razon"] for t in taus]
-    # Control: con la misma etapa 4 corrida un poco más arriba el conjunto activo queda vacío y el
-    # mismo código concuerda con diferencias finitas. El desacuerdo es del punto, no del adjunto.
+    # Control: con la etapa 4 un poco más arriba el conjunto activo queda vacío y el mismo código calza con
+    # diferencias finitas. El desacuerdo es del punto, no del adjunto.
     limpia = [0.4, 0.6, 0.8, 0.85, 0.9] .* εc .* p.L
     r2 = gradiente_at2(limpia, p; objetivo = obj, omega = om)
     τ = 1e-6 * εc * p.L
     fd2 = (costo(limpia .+ τ .* e4) - costo(limpia .- τ .* e4)) / (2τ)
-    # La separación del adjunto a CADA lateral, que es lo que NO depende del desempate de redondeo
-    # del conjunto activo. Medido el 14-nov: `abs(adjunto - promedio) / promedio` pasa de 0,189 a
-    # 0,049 al perturbar ℓ en 3,3e-12 relativo, o sea el criterio viejo —que pedía > 0,05— se pone
-    # ROJO bajo una perturbación del tamaño del redondeo. Este no: su mínimo en las cinco corridas de
-    # `docs/marco/re-medicion-impugnados/` es 1,507.
+    # Separación del adjunto a cada lateral: a diferencia de la distancia al promedio, no depende de cómo el
+    # redondeo desempata el conjunto activo.
     sep = min(abs(r.grad[4] / taus[end]["derecha"]), abs(taus[end]["izquierda"] / r.grad[4]))
     (taus = taus, razones = razones, adjunto = r.grad[4], congelados = r.congelados,
      deriva_de_la_razon = maximum(razones) / minimum(razones) - 1,
@@ -187,13 +148,9 @@ function quiebre_at2()
                        error = abs(r2.grad[4] - fd2) / max(1.0, abs(fd2))))
 end
 
-"""
-    seguimiento_at2(p, blancos; iter, v0)
-
-El problema de control: llevar ∫α dx al programa pedido etapa por etapa. Con omega = 0 el óptimo es
-cerrado —invertir Λ(d), que por rate-independencia es creciente—, así que el descenso proyectado sobre
-los incrementos se mide contra un patrón conocido y no contra sí mismo.
-"""
+# El problema de control: llevar ∫α dx al programa pedido etapa por etapa. Con omega = 0 el óptimo es
+# cerrado (invertir Λ(d), que es creciente), así que el descenso proyectado se mide contra una referencia
+# conocida y no contra sí mismo.
 function seguimiento_at2(p::ParAT2, blancos::AbstractVector; iter = ITER_AT2)
     K = length(blancos)
     dex = carga_exacta_at2(blancos, p)
@@ -205,8 +162,8 @@ function seguimiento_at2(p::ParAT2, blancos::AbstractVector; iter = ITER_AT2)
      carga_inicial = cumsum(v0), lambda_cerrada = sx.longitud, lambda_descenso = o.sol.longitud,
      sigma_cerrada = sx.sigma, alphas = sx.alpha, x = nodos_at2(p), escala = eps_c(p) * p.L,
      error_cerrado = maximum(abs, sx.longitud .- blancos),
-     # B2 del ataque a §9 (15-nov): `error_cerrado` es la precisión de la BISECCIÓN que construye la
-     # referencia, no la distancia del descenso a ella. Esta es esa distancia, programa a programa.
+     # `error_cerrado` es la precisión de la bisección que arma la referencia; esta es la distancia del
+     # descenso a ella, programa a programa.
      distancia_al_cerrado_pct = 100 * maximum(abs.(o.carga .- dex) ./ dex),
      J_cerrado = costo_at2(sx; objetivo = blancos, omega = 0.0).J,
      error_descenso = maximum(abs, o.sol.longitud .- blancos),
@@ -216,17 +173,9 @@ function seguimiento_at2(p::ParAT2, blancos::AbstractVector; iter = ITER_AT2)
      congelados = g.congelados, fijos = count(nodos_fijos(p)), kkt = sx.kkt, p = p)
 end
 
-"""
-    deficit_terminal_at2(p, blancos)
-
-El descenso con blanco TERMINAL (escalar) contra el mismo blanco final del programa de seguimiento, a
-omega = 0. Existe porque la afirmación «con blanco terminal el descenso se estanca» necesitaba una
-corrida en el json y no la tenía: su única fuente era el docstring de `pesos_objetivo`.
-⚠️ Medido el 14-nov ~21:50: NO se estanca. A omega = 0 el descenso ALCANZA el blanco terminal
-(déficit 0,00 %) en 12-16 pasos, en las dos barras. Lo que el blanco terminal deja indeterminado es el
-PROGRAMA, no el punto final — que es el argumento que de verdad sostiene el costo de seguimiento. El
-estancamiento aparece con omega > 0, y entonces es del término de trabajo, no del blanco terminal.
-"""
+# Descenso con blanco terminal (escalar) hacia el mismo blanco final del seguimiento, con omega = 0. Ahí el
+# descenso sí alcanza el blanco: lo que el blanco terminal deja indeterminado es el programa, no el punto
+# final, y por eso el costo es de seguimiento.
 function deficit_terminal_at2(p::ParAT2, blancos::AbstractVector)
     K = length(blancos)
     term = blancos[end]
@@ -237,32 +186,21 @@ function deficit_terminal_at2(p::ParAT2, blancos::AbstractVector)
      pasos = length(o.historia))
 end
 
-"""
-    kkt_por_etapas_at2(; ks = KS_ETAPAS_AT2)
-
-El residuo KKT de llegar a la MISMA carga final (0,9 ε_c L) en la MISMA barra `P_AT2_CONTROL`,
-repartida en `K` etapas iguales. Existe por B3 del ataque a §9 (15-nov): la cifra que el informe
-comparaba con el salto de una etapa era `orden_malla_at2().kkt`, que es el máximo sobre cuatro mallas
-de una rampa de 30 etapas hasta 1,3 ε_c — otra barra y otra carga final. Medido acá, la frontera no
-está en «una etapa contra varias»: con dos y con tres etapas el residuo sigue sobre 1e-2.
-"""
+# Residuo KKT de llegar a la misma carga final (0,9 ε_c L) en la barra `P_AT2_CONTROL`, repartida en K
+# etapas iguales. Muestra que la minimización alternada necesita pasos de carga chicos: con dos y con tres
+# etapas el residuo todavía queda sobre 1e-2.
 function kkt_por_etapas_at2(; ks = KS_ETAPAS_AT2)
     p = P_AT2_CONTROL
     dfin = 0.9 * eps_c(p) * p.L
     Dict(string(K) => resolver_at2(collect(range(dfin / K, dfin; length = K)), p).kkt for K in ks)
 end
 
-"""
-    objetivo5_at2()
-
-El objetivo 5 completo como resultado publicable: los criterios del plan, la lectura del resultado, y
-las series que dibuja `escribir_figura_at2_control`. Devuelve `(o, d)`: `o` va al json, `d` a la
-figura, igual que `acuerdo()`.
-"""
+# El objetivo 5 completo: criterios, lectura y las series de la figura. Devuelve `(o, ct)`: `o` va al json
+# y `ct` a la figura de `escribir_figura_at2_control`, igual que `acuerdo()`.
 function objetivo5_at2()
     hom = rama_homogenea_at2()
-    # M4 del ataque a §9 (15-nov): el default es ℓ_r = L, y el punto del salto depende de ℓ_r/L casi
-    # por un factor 2. Esta segunda barra es la de la figura y la del experimento de malla.
+    # La rama homogénea por defecto tiene ℓ = L, y el punto del salto depende de ℓ/L; esta segunda barra es
+    # la de la figura y la del experimento de malla.
     hom_fig = rama_homogenea_at2(ParAT2(; L = 1.0, ℓ = MALLA_AT2.ℓ, N = 40, defecto = 0.0))
     ml = orden_malla_at2()
     es = invariancia_escala_at2()
@@ -275,27 +213,23 @@ function objetivo5_at2()
     kkt = kkt_por_etapas_at2()
 
     criterios = Dict(
-        # Forward (tarea 4.1): el control analítico y la convergencia, con el criterio del plan.
+        # Forward: el control analítico y la convergencia en malla.
         "la_rama_homogenea_reproduce_la_cerrada_bajo_1e9" =>
             max(hom.error_alpha, hom.error_sigma, hom.error_pico) < 1e-9,
         "el_orden_de_convergencia_en_malla_es_al_menos_085" => ml.orden >= 0.85,
         "la_invariancia_de_escala_pasa_1e9" => es.relativo < 1e-9,
         "mutacion_sin_el_raiz_de_ell_los_picos_difieren_mas_de_20pct" => es.sin_raiz > 0.2,
-        # Adjunto (tarea 4.2): la medición que decide si el objetivo 5 existe, y su mutación.
+        # Adjunto: el gradiente contra diferencias finitas y su mutación.
         "el_gradiente_adjunto_concuerda_con_diferencias_finitas_bajo_1e5" =>
             maximum(gr.errores) < 1e-5,
         "mutacion_sin_el_termino_de_rango_uno_el_gradiente_cambia_de_signo" =>
             !gr.mutacion.mismo_signo,
-        # El quiebre: el resultado.
+        # El quiebre, que es el resultado.
         "las_derivadas_laterales_difieren_mas_de_3x" => minimum(qb.razones) > 3,
         "la_razon_de_las_laterales_no_se_mueve_1pct_al_bajar_tau_100x" =>
             qb.deriva_de_la_razon < 0.01,
-        # ⚠️ CORREGIDO 14-nov ~21:30. Antes era
-        #     "el_adjunto_no_es_el_promedio_de_las_laterales" =>
-        #         abs(qb.adjunto - qb.promedio) > 0.05 * abs(qb.promedio)
-        # y se ponía ROJO (0,0492 < 0,05) al perturbar ℓ en 3,3e-12 relativo: pinchaba el desempate de
-        # redondeo del conjunto activo, no el quiebre. El de abajo exige que el adjunto esté separado
-        # de LAS DOS laterales por al menos un 25 %, y eso aguanta las cinco corridas (mínimo 1,507).
+        # El adjunto tiene que quedar separado de las dos laterales por al menos un 25 %; compararlo con el
+        # promedio de las laterales era frágil frente al redondeo.
         "el_adjunto_no_es_ninguna_de_las_dos_laterales" => qb.separacion_laterales > 1.25,
         "donde_el_conjunto_activo_no_cambia_el_mismo_codigo_concuerda" =>
             qb.control_limpio.error < 1e-5 && all(==(0), qb.control_limpio.congelados),
@@ -318,11 +252,11 @@ function objetivo5_at2()
         "adjunto_en_el_quiebre" => qb.adjunto,
         "promedio_de_las_laterales" => qb.promedio,
         "adjunto_relativo_al_promedio" => qb.adjunto / qb.promedio,
-        # Inestable (se mueve 29 % al perturbar ℓ en 3,3e-12 relativo): se registra, no se cita.
+        # Inestable frente a perturbaciones del tamaño del redondeo: se registra, no se cita.
         "separacion_del_adjunto_a_la_lateral_mas_cercana" => qb.separacion_laterales,
         "nodos_congelados_en_la_etapa_que_sostiene" => qb.congelados[4],
         "nodos_de_la_barra_del_quiebre" => P_QUIEBRE_AT2.N + 1,
-        # El blanco TERMINAL, que hasta el 14-nov ~21:50 el documento afirmaba «medido» sin corrida.
+        # Déficit respecto del blanco final cuando el blanco es terminal.
         "deficit_pct_con_blanco_terminal_con_defecto" => tc.deficit_pct,
         "deficit_pct_con_blanco_terminal_homogenea" => th.deficit_pct,
         "pasos_del_descenso_con_blanco_terminal" => [tc.pasos, th.pasos],
@@ -333,16 +267,15 @@ function objetivo5_at2()
         "pico_de_ruptura_malla_fina" => ml.picos[end],
         "pico_homogeneo_mismo_ell" => sigma_pico_homogenea(ParAT2(; ℓ = MALLA_AT2.ℓ)),
         "sin_el_raiz_de_ell_los_picos_difieren_pct" => 100 * es.sin_raiz,
-        # Límite medido, no criterio: la alternada necesita que la carga llegue en pasos chicos. Todo
-        # este bloque es la MISMA barra y la MISMA carga final, repartida en K etapas (B3 del ataque
-        # a §9): lo que manda es el tamaño del paso, no que haya más de una etapa.
+        # Límite de la minimización alternada, no criterio: misma barra y misma carga final repartida en K
+        # etapas. Lo que manda es el tamaño del paso de carga.
         "kkt_si_una_sola_etapa_salta_a_09_epsc" => kkt[string(1)],
         "kkt_misma_barra_dos_etapas" => kkt[string(2)],
         "kkt_misma_barra_tres_etapas" => kkt[string(3)],
         "kkt_misma_barra_cinco_etapas" => kkt[string(5)],
         "kkt_misma_barra_diez_etapas" => kkt[string(10)],
-        # ⚠️ NO es «la misma carga por etapas»: es el máximo sobre las cuatro mallas de la rampa de
-        # 30 etapas hasta 1,3 ε_c. Otra barra, otra carga final. Así se llamaba y así engañaba.
+        # Ojo: este es el máximo sobre las cuatro mallas de la rampa de 30 etapas hasta 1,3 ε_c, con otra
+        # barra y otra carga final que las de arriba.
         "kkt_de_la_rampa_de_30_etapas_peor_malla" => ml.kkt,
         "distancia_del_descenso_al_programa_cerrado_pct_con_defecto" => ct.distancia_al_cerrado_pct,
         "distancia_del_descenso_al_programa_cerrado_pct_homogenea" => hg.distancia_al_cerrado_pct,
@@ -353,7 +286,6 @@ function objetivo5_at2()
     o = Dict(
         "malla" => Dict("N" => ml.ns, "picos" => ml.picos, "diferencias" => ml.difs,
                         "razones" => ml.razones, "ordenes" => ml.ordenes,
-                        # M10 del ataque a §9: §9.3 citaba `escala/ell_a` para describir ESTA barra.
                         "ell" => MALLA_AT2.ℓ, "defecto" => MALLA_AT2.defecto,
                         "ancho" => MALLA_AT2.ancho),
         "escala" => Dict("pico_a" => es.pico_a, "pico_b" => es.pico_b, "ell_a" => es.ell_a,

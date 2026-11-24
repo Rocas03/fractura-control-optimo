@@ -1,7 +1,8 @@
-# Port 1:1 de avance/codigo/cifras_reporte.py (e31f323): un \newcommand por cada número del reporte, leído de los json
-# recién escritos. Antes de escribir se comprueba que lo que el texto afirma con palabras siga siendo cierto en los
-# json: que la cota no se active en el caso base, que la brecha directo-disparo baje como h^2, que todos los criterios
-# estén en verde, etc. Si algo no se cumple, error y no se escribe nada.
+# Cifras del reporte de avance: un \newcommand por cada número, leído de los json recién escritos. Antes de
+# escribir comprueba que lo que el texto afirma con palabras siga siendo cierto (la cota no se activa en el
+# caso base, la brecha directo-disparo baja como h², todos los criterios en verde, etc.); si algo falla, da
+# error y no escribe nada. Es una traducción fiel de un script anterior en Python, y por eso imita su
+# formato (`pot10`, `lista_py`).
 const CIFRAS = joinpath(RAIZ, "avance", "reporte", "cifras.tex")
 
 coma(s) = replace(s, "." => "{,}")
@@ -9,7 +10,7 @@ coma(s) = replace(s, "." => "{,}")
 dec(x, k) = coma(Printf.format(Printf.Format("%.$(k)f"), x))
 # Parámetro tal como se escribe: 2, 0,2, 10.
 g(x) = coma(@sprintf("%g", x))
-# Python: 10**e es un entero exacto si e ≥ 0 y pow() de libm si e < 0; 10.0^-2 de Julia no es pow(10, -2) (medido).
+# Como en Python: 10**e es entero exacto si e ≥ 0 y pow() de libm si e < 0; 10.0^-2 de Julia no da lo mismo.
 pot10(e) = e >= 0 ? Float64(big(10)^e) : ccall(:pow, Float64, (Float64, Float64), 10.0, e)
 
 # x en notación a·10^e con `cifras` cifras significativas; techo = true redondea hacia arriba.
@@ -162,6 +163,7 @@ function cifras_reporte(res = RES)
     c
 end
 
+# Escribe una macro \cf<nombre> por cifra, comprobando que cada nombre sea solo letras.
 function escribir_cifras(c, archivo = CIFRAS; etiqueta = "cifras_reporte")
     lineas = ["% Escrito por julia/src (paquete Fractura) a partir de los json de resultados. No editar a mano."]
     for (k, v) in c

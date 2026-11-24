@@ -1,8 +1,11 @@
+# Objetivo 3: el extremal de Pontryagin (disparo) contra el método directo y contra controles simples.
+# SEMILLA es el ζ(0) con que parte el disparo.
 const SEMILLA = [0.8161, 0.4346]
 const NS = (25, 50, 100, 200)
 const WTS = (10.0, 1e2, 1e3, 1e4)
 const PREFS = (0.0, 0.25, 0.5)
 
+# Método directo con N = 25, 50, 100 y 200 tramos; cada N parte del óptimo del anterior, con cada tramo partido en dos.
 function cascada_directo(p)
     out, q = Dict{Int, Any}(), nothing
     for N in NS
@@ -15,6 +18,7 @@ end
 
 sin_sol(r) = Dict{String, Any}(k => v for (k, v) in r if k != "sol")
 
+# Curvas (t, U, ℓ, P) para las figuras: la del extremal y la de un control constante a trozos.
 function curva_extremal(r, p; n = 801)
     t = range(0.0, p.T, length = n)
     Y = r["sol"].(t)
@@ -31,6 +35,7 @@ function curva_escalonada(q, p; n = 801)
         reduce(vcat, [getindex.(y, 1) for y in Y]), reduce(vcat, [getindex.(y, 2) for y in Y])
 end
 
+# Máximo de la presión y del caudal a lo largo del extremal, en una malla fina.
 function pico_presion(r, p; n = 20001)
     t = range(0.0, p.T, length = n)
     P = [r["sol"](τ)[2] for τ in t]
@@ -45,6 +50,8 @@ function objetivo3()
     criterios = Dict{String, Any}()
     res = Dict{String, Any}("parametros_base" => comodict(p), "semilla" => SEMILLA)
 
+    # Disparo contra directo: mismo J, el disparo bajo el directo en todo N, y ζ(0) del adjunto discreto
+    # cerca del ζ(0) del disparo.
     rp = resolver(p, SEMILLA, :penalizado)
     directo = cascada_directo(p)
     q200 = directo[200].x
@@ -59,6 +66,7 @@ function objetivo3()
     criterios["z0_disparo_cerca_de_z0_directo_N200_5e-3"] = maximum(abs, rp["z0"] .- z0_directo) ≤ 5e-3
     criterios["H_oscilacion_1e-8"] = rp["H_oscilacion"] ≤ 1e-8
 
+    # Controles simples: el extremal tiene que quedar bajo la mejor rampa, y esta bajo la mejor constante.
     rc, rr, rv = mejor_constante(p), mejor_rampa(p), constante_igual_volumen(p, SEMILLA)
     U_fact, ℓ_fact = constante_factible(p)
     q_rampa = base_rampa(p) * [rr["a"], rr["b"]]
@@ -75,6 +83,8 @@ function objetivo3()
     curvas = [("extremal", curva_extremal(rp, p)), ("mejor constante", curva_escalonada([rc["U"]], p)),
               ("igual volumen", curva_escalonada([rv["U"]], p)), ("mejor rampa", curva_escalonada(q_rampa, p))]
 
+    # Con ℓ(T) = ℓd fijo, ζℓ(T) = ν es un multiplicador libre. Al subir wT en el penalizado, -wT(ℓ(T) - ℓd)
+    # debe acercarse a ν con error del orden de 1/wT, o sea unas diez veces menos por década.
     rt = resolver(p, SEMILLA, :terminal)
     z0, cont = SEMILLA, Dict{String, Any}[]
     for wT in WTS
@@ -99,6 +109,7 @@ function objetivo3()
     criterios["continuacion_converge"] = all(c["exito"] for c in cont)
     criterios["continuacion_10x_por_decada"] = all(5 ≤ q ≤ 20 for q in razones)
 
+    # Presión de referencia Pref distinta de cero, por continuación desde la semilla.
     z0, pref = SEMILLA, Dict{String, Any}[]
     for Pref in PREFS
         r = resolver(con(p; Pref), z0)
@@ -109,6 +120,8 @@ function objetivo3()
     res["pref"] = pref
     criterios["pref_disparo_converge"] = all(r["exito"] for r in pref)
 
+    # Con qmax = 0.8 la cota se activa al inicio: un solo arco en la cota, y el instante en que el directo sale
+    # de ella tiene que caer a menos de un tramo h de la conmutación del disparo.
     p08 = con(p; qmax = 0.8)
     r08 = resolver(p08, SEMILLA)
     d08 = cascada_directo(p08)[200]

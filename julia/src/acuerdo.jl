@@ -1,39 +1,21 @@
-# F2: el acuerdo entre los tres métodos. ¿Dan lo mismo el directo, el disparo y HJB?
-#
-# Los tres cómputos ya existían por separado (objetivos 3 y 4) y estaban cruzados de a pares, pero
-# nadie los había puesto en los mismos ejes ni medido su convergencia en una sola tabla. Lo que
-# aporta este archivo no es un método nuevo: es la verificación cruzada de los tres, que es lo que
-# vuelve creíble el óptimo. Los tres caminos son independientes en lo que calculan:
-#
-#   directo   discretizar y después optimizar: N incógnitas y un IP sobre ellas (Ipopt).
-#   disparo   resolver el problema de contorno del PMP: dos incógnitas, z0, y Newton.
-#   HJB       programación dinámica en una malla de (ℓ, P, t), y su ley de feedback en lazo cerrado.
-#
-# Lo que esto prueba y lo que no: un error de MODELO movería a los tres por igual, así que coincidir
-# no valida el modelo. Lo que valida es la IMPLEMENTACIÓN, que es donde se cometen los errores que
-# nadie ve: un signo en el adjunto, un índice en la malla, una condición de borde. Así se dice.
-#
-#   acuerdo()          el disparo, la cascada del directo hasta N = 400, los tres niveles de HJB,
-#                      la tabla de convergencia, los criterios, y los datos de la figura.
-#   control_pmp        U*(t) del extremal como función de t: la referencia de las comparaciones.
-#   sup_du_directo     sup|q_k − U*(punto medio del tramo k)|, la discrepancia entre CURVAS.
+# Acuerdo de los tres métodos en una misma tabla de convergencia: el directo (discretizar y optimizar con Ipopt),
+# el disparo (Newton sobre ζ(0) en el sistema de Pontryagin) y el lazo cerrado de HJB (programación dinámica).
+# Calculan por caminos independientes, así que coincidir valida la implementación (un signo en el adjunto, un
+# índice en la malla, un borde), pero no el modelo: un error de modelo los movería a los tres por igual.
 
 const NS_ACUERDO = (50, 100, 200, 400)
 
-# Tolerancia del acuerdo en J entre los tres métodos, con la discretización más fina de cada uno.
-# NO viene del plan: la fijo acá, el 14-nov, después de la sonda de costo que midió las brechas, y
-# lo digo en vez de presentarla como criterio previo. 5e-4 relativo es dos órdenes de magnitud bajo
-# la brecha del peor control razonable (la mejor constante está 6,7 % arriba) y un orden sobre la
-# brecha del nivel grueso de HJB (2,5e-3), así que distingue «el método converge» de «coincide».
+# Tolerancia relativa del acuerdo en J, con la discretización más fina de cada método. Se fijó después de medir
+# las brechas, no antes. Queda dos órdenes bajo la brecha de la mejor constante (6,7 %) y bajo la del nivel
+# grueso de HJB (2,5e-3), así que separa coincidir de solo parecerse.
 const TOL_ACUERDO_J = 5e-4
 
-# U*(t) del extremal del disparo. `rp["sol"]` es la solución densa del sistema extremal (estado y
-# adjunto), y ustar aplica la minimización del Hamiltoniano con la proyección a [0, qmax].
+# U*(t) del extremal del disparo, la referencia de las comparaciones: se evalúan estado y adjunto en t y se
+# aplica U* = proy(ζP / (wq D)).
 control_pmp(rp, p) = t -> (y = rp["sol"](t); ustar(x2(y), ζ2(y), p))
 
-# El directo entrega un control constante a trozos. Comparado con un control suave el punto justo es
-# el PUNTO MEDIO de cada tramo: ahí el error de la constante a trozos es O(h²), el mismo orden que la
-# cascada muestra en J. Comparar en los nodos mediría el ancho de la escalera, no el método.
+# sup |q_k - U*| con U* evaluado en el punto medio de cada tramo: ahí el error de la constante a trozos es O(h²),
+# el mismo orden que muestra J; en los nodos se mediría el ancho de la escalera y no el método.
 function sup_du_directo(q, p, Ustar)
     t = malla(p, length(q))
     maximum(abs(q[k] - Ustar((t[k] + t[k+1]) / 2)) for k in eachindex(q))
@@ -41,6 +23,8 @@ end
 
 baja(v) = all(v[i+1] < v[i] for i in 1:length(v)-1)
 
+# Disparo, cascada del directo hasta N = 400 y los tres niveles de HJB, con brechas en J, orden observado,
+# criterios y los datos de la figura.
 function acuerdo(p = Par())
     criterios = Dict{String, Any}()
     rp = resolver(p, SEMILLA, :penalizado)

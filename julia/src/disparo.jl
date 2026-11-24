@@ -1,5 +1,8 @@
+# Pontryagin por disparo: se adivina ζ(0), se integra el sistema extremal con U = U*(x, ζ) y se ajusta ζ(0)
+# con Newton hasta cumplir las condiciones en T.
 const TOL_RESIDUO = 1e-10
 
+# Estado, adjunto y costo corriente acumulado desde x(0) y ζ(0) = z0.
 function extremal(z0, p)
     integrar(SVector(p.ℓ0, p.P0, z0[1], z0[2], 0.0), (0.0, p.T)) do y, _
         x, ζ = x2(y), ζ2(y)
@@ -8,11 +11,15 @@ function extremal(z0, p)
     end
 end
 
+# Condiciones en T. Penalizado: ζℓ(T) = -wT(ℓ(T) - ℓd). Terminal (ℓ(T) = ℓd fijo): ζℓ(T) libre.
+# En ambos, ζP(T) = 0 por transversalidad.
 function residuo(z0, p, variante)
     yT = extremal(z0, p).u[end]
     variante == :penalizado ? SVector(yT[3] + p.wT * (yT[1] - p.ℓd), yT[4]) : SVector(yT[1] - p.ℓd, yT[4])
 end
 
+# Instantes en que el caudal libre ζP / (wq D) cruza 0 o qmax, es decir, donde la proyección empieza o deja de
+# actuar. Se descarta el cruce en T, que siempre existe porque ζP(T) = 0.
 function conmutaciones(s, p; npts = 4001)
     t = range(0.0, p.T, length = npts)
     w(τ) = (y = s(τ); ulibre(x2(y), ζ2(y), p))
@@ -24,6 +31,7 @@ function conmutaciones(s, p; npts = 4001)
     sort(filter(τ -> p.T - τ > 1e-6, out))
 end
 
+# Resuelve el disparo y reporta J, el residuo y cuánto oscila H, que en un extremal autónomo debe ser constante.
 function resolver(p, semilla, variante = :penalizado)
     variante in (:penalizado, :terminal) || throw(ArgumentError(string(variante)))
     r = newton2(z -> residuo(z, p, variante), semilla)

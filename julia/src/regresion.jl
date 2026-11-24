@@ -1,10 +1,11 @@
-# Antes de sobrescribir avance/resultados/<n>.json se compara lo recién calculado con lo que hay en disco, con las
-# mismas clases de tolerancia que $C/comparar.py (congeladas en T0). Si el json no existe no hay regresión: así se
-# acepta un cambio de modelo, borrando el json a propósito.
+# Antes de sobrescribir avance/resultados/<n>.json se compara lo recién calculado con lo que hay en disco. Si el json
+# no existe no hay regresión: así se acepta un cambio de modelo, borrando el json a propósito.
 const RES = joinpath(RAIZ, "avance", "resultados")
-# `final/` es la entrega final: json, figuras e informe nuevos. `avance/` está entregado y no se toca.
+# Los resultados de la entrega final van aparte, en final/resultados; los del avance no se tocan.
 const RES_FINAL = joinpath(RAIZ, "final", "resultados")
 
+# Tolerancias: una general relativa y, por ruta del json, umbrales (residuos que solo deben ser chicos),
+# absolutas y relativas más holgadas. Las rutas que calzan con EXCLUIDAS no se comparan.
 const RTOL, ATOL = 1e-6, 1e-12
 const EXCLUIDAS = [r"/mensaje$"]
 const EXTRA_PERMITIDAS = Set(["/qmax08/fijadas", "/qmax08/dJ_fijar"])
@@ -14,7 +15,7 @@ const ABSOLUTA = [r"pmp_brecha_max$" => 5e-7]
 const RELATIVA = [r"^/(directo/\d+|qmax08/directo_N\d+)/H_oscilacion$" => 5e-3,
                   r"^/(directo/\d+|qmax08/directo_N\d+)/q_(min|ultimo)$" => 5e-5]
 
-# Rutas como las de comparar.py: «/clave» para diccionarios y «[i]» con i desde 0 para listas.
+# Aplana el json en hojas con rutas «/clave» para diccionarios y «[i]», con i desde 0, para listas.
 function hojas!(out, x, ruta = "")
     if x isa AbstractDict
         for (k, v) in x
@@ -33,6 +34,7 @@ end
 esnum(x) = x isa Number && !(x isa Bool)
 buscar(reglas, ruta) = (i = findfirst(r -> occursin(r.first, ruta), reglas); i === nothing ? nothing : reglas[i].second)
 
+# Lista de hojas que faltan, sobran o se salen de su tolerancia.
 function fuera_de_tolerancia(ref, nuevo)
     r, n = hojas!(Dict{String, Any}(), ref), hojas!(Dict{String, Any}(), nuevo)
     malas = String[]

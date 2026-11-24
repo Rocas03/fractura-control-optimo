@@ -1,3 +1,7 @@
+# HJB por un esquema semi-Lagrangiano en una malla de (ℓ, P) y pasos de tiempo dt: hacia atrás desde V(T) = Φ,
+# V(x, t) = min_U [costo del paso + V(x + dt f, t + dt)], con V interpolado bilinealmente en el pie del paso.
+
+# Celda y coordenada local de X en el eje e. Fuera del eje se extrapola o se recorta al borde.
 function ubicar(e, X, modo)
     modo in (:extrapolar, :recortar) || throw(ArgumentError(string(modo)))
     X = modo == :recortar ? clamp(X, e[1], e[end]) : X
@@ -9,19 +13,22 @@ end
 evaluar(V, (i, s, j, r)) = (1 - s) * (1 - r) * V[i, j] + s * (1 - r) * V[i+1, j] + (1 - s) * r * V[i, j+1] + s * r * V[i+1, j+1]
 interpolar(V, ejes, X0, X1, bordes) = evaluar(V, (ubicar(ejes[1], X0, bordes[1])..., ubicar(ejes[2], X1, bordes[2])...))
 
+# Pie de la característica: un paso de punto medio desde x con control u.
 function pie(f, x, u, dt)
     k1 = f(x, u)
     k2 = f((x[1] + dt / 2 * k1[1], x[2] + dt / 2 * k1[2]), u)
     x[1] + dt * k2[1], x[2] + dt * k2[2]
 end
 
+# Lo que se reutiliza en cada paso de tiempo: dónde cae el pie y el costo del paso por trapecio.
 function tabla(f, costo, x, u, dt, ejes, bordes)
     y = pie(f, x, u, dt)
     (ubicar(ejes[1], y[1], bordes[1])..., ubicar(ejes[2], y[2], bordes[2])..., dt / 2 * (costo(x, u) + costo(y, u)))
 end
 
-# where {F, C}: f y costo solo se pasan, y sin esto Julia no especializa en ellos; el bucle de abajo
-# queda con despacho dinámico y va ~25 veces más lento (medido el 13-oct).
+# Como la dinámica es autónoma, los pies se calculan una vez y se reutilizan en todos los pasos; el mínimo se toma
+# sobre una lista finita de controles. El where {F, C} obliga a Julia a especializar en f y costo: sin él, el bucle
+# queda con despacho dinámico y va unas 25 veces más lento.
 function semi_lagrangiano(f::F, costo::C, g, ejes, controles, T, nt, bordes) where {F, C}
     dt = T / nt
     nodos = collect(Iterators.product(ejes...))
@@ -55,8 +62,8 @@ function solucion(f, costo, g, ejes, controles, T, nt, bordes)
     (; V, politica = pol, f, costo, ejes, controles = collect(float.(controles)), T, nt, dt = T / nt, bordes)
 end
 
-# La ley se consulta en t ∈ [0, T): entre t y el nodo siguiente faltan δ = t_{k+1} − t, y se propaga δ, no un dt
-# completo (H01 de la revisión del 16-oct). En los nodos δ = dt y coincide con la política de la tabla.
+# Retroalimentación U(t, x): el mismo mínimo del esquema, pero desde x y con el tiempo δ = t_{k+1} - t que falta
+# hasta el nodo siguiente. En los nodos δ = dt y coincide con la política guardada.
 function feedback(sol, t, x)
     0 <= t < sol.T || throw(ArgumentError("feedback: t = $t fuera de [0, T)"))
     k = min(floor(Int, t / sol.dt + 1e-9), sol.nt - 1)
@@ -75,6 +82,7 @@ end
 
 valor(sol, k, x) = interpolar(sol.V[k+1], sol.ejes, x[1], x[2], sol.bordes)
 
+# En ℓ se extrapola y en P se recorta al borde de la malla.
 const BORDES_FRACTURA = (:extrapolar, :recortar)
 
 function hjb_fractura(p, nl, nP, nt, nu; lmax = 2.55, Pmax = 1.2)
@@ -83,6 +91,8 @@ function hjb_fractura(p, nl, nP, nt, nu; lmax = 2.55, Pmax = 1.2)
              p.T, nt, BORDES_FRACTURA)
 end
 
+# Lazo cerrado: el control se recalcula con la ley al inicio de cada uno de n_sub subintervalos y se mantiene
+# fijo mientras RK4 integra estado y costo corriente.
 function simular_lazo(f, costo, g, ley, x0, T; n_sub = 400, n_rk = 5)
     h = T / n_sub
     dh = h / n_rk

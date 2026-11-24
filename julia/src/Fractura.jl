@@ -1,13 +1,6 @@
-"""
-Fractura hidráulica: control óptimo del caudal de inyección (MA4703, avance del proyecto).
-
-Cada archivo de `src/` es una sección del notebook que se entrega (`notebook/fractura.ipynb`), que `notebook/derivar.py`
-arma a partir de estos mismos archivos: no hay otra copia del código. Las rutas de lectura y escritura cuelgan de
-`RAIZ`, la raíz del repositorio; el notebook entregado las reemplaza por `salidas/`.
-
-Uso: `julia --project=julia julia/regenerar.jl` (resultados, semilla, cifras y figuras del reporte) y
-`julia --project=julia julia/test/runtests.jl` (pruebas).
-"""
+# Paquete Fractura: control óptimo del caudal de inyección en un modelo reducido de fractura hidráulica (MA4703).
+# Los archivos del avance son también las secciones del notebook, que notebook/derivar.py arma desde aquí.
+# Las rutas de lectura y escritura cuelgan de RAIZ, la raíz del repositorio.
 module Fractura
 
 using OrdinaryDiffEqVerner, NLPModels, NLPModelsIpopt, QuadGK, JSON, StaticArrays, LinearAlgebra, Printf, Random
@@ -65,11 +58,8 @@ include("cifras_informe.jl")
 include("figuras.jl")
 include("datos_beamer.jl")
 
-# Precompila la semilla y la E/S (json, regresión, cifras), que no dependen del integrador. Los objetivos 1, 3 y 4 NO
-# van aquí: compilados en la precompilación, sus resultados cambian en la última cifra (ulp) respecto del JIT del
-# notebook, y con ellos dos cifras del reporte (medido el 14-oct; el mecanismo no está medido). La versión rápida
-# tiene que dar exactamente lo mismo que el notebook entregado. Tiempos medidos: sin workload 15,7 s, con este 9,4 s,
-# con la corrida completa 3–4 s pero con otras cifras.
+# Se precompilan solo la semilla y la E/S (json, regresión, cifras). Los objetivos 1, 3 y 4 quedan fuera porque,
+# compilados aquí, sus resultados cambian en la última cifra respecto del notebook, y eso movía cifras del reporte.
 @setup_workload begin
     dir = mktempdir()
     @compile_workload begin

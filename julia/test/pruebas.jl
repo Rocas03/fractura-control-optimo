@@ -1,6 +1,6 @@
 @testset "pruebas" begin
 
-# ### modelo
+# Modelo, raíces y Newton.
 @testset "jacobiano analítico contra paso complejo" begin
     rng = Xoshiro(4703)
     for n in (1.0, 2.0, 3.5), _ in 1:10
@@ -23,7 +23,8 @@ end
     @test r.u ≈ [sqrt(0.5), sqrt(0.5)] atol = 1e-13
 end
 
-# ### test_dinamica.py
+# Dinámica sin control y con caudal constante: solución implícita, balance de volumen, monotonía, positividad,
+# equilibrios y pendientes tardías.
 @testset "test_dinamica.py::test_formula_implicita_sin_control_ni_filtracion_n1" begin
     par = con(PAR; n = 1.0, η = 0.0, ℓ0 = 1.0, P0 = 0.3)
     r = simular(par, 0.0, 5.0, 201)
@@ -78,74 +79,64 @@ end
     @test abs(pend_P + (n + 2) / (3 * n + 2)) <= 0.05
 end
 
-# ### §3.1 · el largo límite sin inyección, contra la derivación cerrada del informe
-# §3.1 deriva que con q ≡ 0 la fractura se detiene donde S se anula, y que ese largo límite es la única
-# raíz de n·η·∫ s^(1-n/2)(c+s²)^(n-1) ds = S₀^n, con la cota explícita [ℓ₀^(3n/2) + (3/2η)S₀^n]^(2/(3n))
-# y con IGUALDAD en n = 1. Acá se cotejan las tres afirmaciones contra el integrador del proyecto.
-# Sin esto, el argumento del informe solo estaba verificado por una corrida suelta de scipy, fuera del
-# arnés. Tolerancias MEDIDAS, no elegidas: cinco de las seis combinaciones coinciden a 1e-16 y la lenta
-# (n = 1, η = 0,05, donde ℓ_∞ = 7,12) a 3,4e-7, porque a τ = 2000 todavía le queda P = 6e-9.
-# `ell_limite` y `cota_ell_limite` viven desde el 15-nov en el paquete (src/objetivo1.jl), porque la
-# figura F0 marca esa raíz y esa cota en el plano de fase: con una copia acá, la prueba y la figura
-# podían separarse sin que nada avisara.
+# Largo límite sin inyección: la simulación se estanca en la raíz ℓ∞ de la integral porque S se anula, y la cota
+# explícita la acota, con igualdad en n = 1. Las tolerancias salen de lo medido: el caso más lento (n = 1, η = 0,05)
+# queda a 3,4e-7 en τ = 2000.
 
 @testset "§3.1: el largo límite es la raíz de la integral, y la cota lo acota [$n-$eta]" for n in [1.0, 2.0, 3.0], eta in [0.05, 0.2]
     par = con(PAR; n = n, η = eta)
     ell_inf, S0 = ell_limite(par)
     cota = (par.ℓ0^(3n / 2) + 3 / (2eta) * S0^n)^(2 / (3n))
     r = simular(par, 0.0, 2000.0, 11)
-    @test abs(r.ℓ[end] - ell_inf) / ell_inf < 1e-5     # el integrador se estanca en la raíz
-    @test r.P[end] < 1e-6                              # y se estanca porque S se anuló, no por el horizonte
-    @test ell_inf <= cota * (1 + 1e-12)                # la cota explícita
+    @test abs(r.ℓ[end] - ell_inf) / ell_inf < 1e-5
+    @test r.P[end] < 1e-6
+    @test ell_inf <= cota * (1 + 1e-12)
     if n == 1.0
-        @test abs(ell_inf - cota) / cota < 1e-10       # con igualdad en n = 1, como dice la derivación
+        @test abs(ell_inf - cota) / cota < 1e-10
     end
 end
 
 @testset "§3.1: con los valores nominales no se llega al objetivo sin inyectar" begin
-    # Es lo que hace no trivial el problema de control del §6: la afirmación vale para el caso base,
-    # NO en general — con n = 1 el largo límite se va muy por encima de ℓd (3,12 y 7,12 arriba).
+    # En el caso base no se llega a ℓd sin inyectar, y eso es lo que hace no trivial el control; con n = 1 sí se llega.
     ell_inf, _ = ell_limite(PAR)
     @test ell_inf < PAR.ℓd
     @test ell_limite(con(PAR; n = 1.0, η = 0.2))[1] > PAR.ℓd
 end
 
-# ### §3.1 · F0: la figura del plano de fase, contra lo que §3.1 deriva
-# La figura del objetivo 1 no sale de un json (el del objetivo 1 es del avance, congelado): sus cifras
-# las escribe el generador. Esto es lo que las verifica. Tolerancias MEDIDAS el 15-nov sobre las cuatro
-# trayectorias libres: la peor distancia relativa al equilibrio es 6,2e-12 (P₀ = 1) y la peor presión
-# sobrante a τ = 200 es 8,7e-7, así que 1e-9 y 1e-5 dejan 160x y 11x de margen.
+# Datos de la figura del plano de fase del objetivo 1: la familia libre llega a su equilibrio bajo la cota, ℓ∞ crece
+# con S0, el umbral U* da ℓ(T) = ℓd y ninguna trayectoria forzada se detiene.
 @testset "§3.1 · F0: la figura del plano de fase dibuja lo que §3.1 deriva" begin
     d = datos_figura_obj1()
     @test length(d.libres) == 4 && length(d.forzadas) == 4
     @testset "familia libre P0 = $(c.P0)" for c in d.libres
-        @test abs(c.ell_fin - c.ell_inf) / c.ell_inf < 1e-9   # el integrador llegó al equilibrio
-        @test c.P_fin < 1e-5                                   # y llegó porque S se anuló
-        @test c.ell_inf <= c.cota * (1 + 1e-12)                # la cota (3.5) acota la raíz (3.4)
-        # La cota que la figura MARCA es la misma fórmula que el informe deriva, transcrita aparte.
+        @test abs(c.ell_fin - c.ell_inf) / c.ell_inf < 1e-9
+        @test c.P_fin < 1e-5
+        @test c.ell_inf <= c.cota * (1 + 1e-12)
+        # La cota que marca la figura es la misma fórmula, escrita aparte.
         q = con(PAR; P0 = c.P0)
         @test cota_ell_limite(q, c.S0) == (q.ℓ0^(3q.n / 2) + 3 / (2q.η) * c.S0^q.n)^(2 / (3q.n))
         @test c.ℓ[1] == PAR.ℓ0 && c.P[1] == c.P0
-        @test minimum(diff(c.ℓ)) ≥ -1e-12                      # ℓ no decrece: §3.1, positividad de F
+        @test minimum(diff(c.ℓ)) ≥ -1e-12
     end
-    # El caso base es el que hace no trivial el §6: sin inyectar no se llega a ℓd.
+    # Caso base: sin inyectar no se llega a ℓd.
     base = d.libres[2]
     @test base.P0 == PAR.P0
     @test base.ell_inf < PAR.ℓd
-    # ℓ_∞ crece con el agua inicial, que es la dependencia S₀^(2/3) que §3.1 lee de la cota.
+    # ℓ∞ crece con el volumen inicial S0, como indica la cota.
     @test issorted([c.ell_inf for c in d.libres])
-    # El umbral que la figura imprime: ℓ(T; U*) = ℓd, y es único porque ℓ(T; ·) crece.
+    # El umbral U* da ℓ(T) = ℓd y es único porque ℓ(T; ·) crece.
     @test abs(d.ellT_Ustar - PAR.ℓd) < 1e-10
     @test 0 < d.Ustar < PAR.qmax
     @test all(diff([simular(PAR, U, PAR.T, 3).ℓ[end] for U in range(0.0, PAR.qmax, length = 81)]) .> 0)
     @test all(c.ellT < PAR.ℓd for c in d.forzadas if c.U < d.Ustar)
     @test all(c.ellT > PAR.ℓd for c in d.forzadas if c.U > d.Ustar)
     @test any(c.U < d.Ustar for c in d.forzadas) && any(c.U > d.Ustar for c in d.forzadas)
-    # Ninguna trayectoria forzada se detiene: con U > 0 no hay equilibrio (§3.1).
+    # Con U > 0 no hay equilibrio: ninguna trayectoria forzada se detiene.
     @test all(c.PT > 0 for c in d.forzadas)
 end
 
-# ### test_directo.py
+# Método directo: el avance coincide con una integración continua, el gradiente adjunto con diferencias finitas
+# (y no con uno de signo cambiado), y el óptimo anula el gradiente.
 @testset "test_directo.py::test_forward_coincide_con_integracion_de_un_tramo" begin
     q = fill(0.5, 20)
     J, _ = avance(q, PAR)
@@ -190,7 +181,7 @@ end
     @test d["J"] < avance(fill(0.5, 20), PAR)[1]
 end
 
-# ### test_cotas_pref.py
+# Cotas del caudal y presión de referencia Pref en el costo, el gradiente y el óptimo.
 @testset "test_cotas_pref.py::test_params_trae_qmax_y_pref" begin
     @test PAR.qmax == 2.0
     @test PAR.Pref == 0.0
@@ -244,7 +235,8 @@ end
     @test abs(res.fun - 0.37186254275) <= 1e-9
 end
 
-# ### test_disparo.py
+# Disparo: U* es la proyección; el extremal queda bajo el directo; con qmax = 0,8 conmuta donde el directo sale de
+# la cota; y al subir wT el penalizado tiende al problema con ℓ(T) = ℓd fijo.
 @testset "test_disparo.py::test_u_estrella_es_el_clip" begin
     x = [1.2, 0.3]
     Dn = PAR.c + 1.44
@@ -302,7 +294,7 @@ end
     @test y[5, 1] == 0.0
 end
 
-# ### test_comparaciones.py
+# Controles simples: factibilidad, orden de costos, desglose de J y la constante de igual volumen.
 @testset "test_comparaciones.py::test_factibilidad_constante_por_brentq" begin
     U, ell_T = constante_factible(PAR)
     @test 0.0 <= U <= PAR.qmax
@@ -350,7 +342,7 @@ end
     @test abs(rv["volumen"] - V_directo) < 1e-3 * V_directo
 end
 
-# ### test_hjb.py
+# HJB: interpolación, casos con solución exacta (sin dinámica y LQ por Riccati), la retroalimentación y la fractura.
 @testset "test_hjb.py::test_interpolacion_bilineal_exacta_en_el_interior" begin
     ejes = _ejes(-1.0, 2.0, 13)
     G0 = [x for x in ejes[1], y in ejes[2]]
@@ -411,7 +403,7 @@ end
 @testset "test_hjb.py::test_feedback_entre_nodos_propaga_el_tiempo_restante" begin
     ejes = _ejes(-3.0, 3.0, 21)
     sol = solucion(_lq_f, _lq_costo, _lq_g, ejes, range(-4.0, 4.0, length = 21), T_LQ, 5, (:extrapolar, :extrapolar))
-    # El control que elige la tabla de Bellman al propagar un horizonte h desde x con V_{k+1}; feedback usa h = t_{k+1} - t.
+    # El control que elige el esquema al propagar un tiempo h desde x con V_{k+1}; feedback debe usar h = t_{k+1} - t.
     function elegir(k, x, h)
         mejor, umejor = Inf, sol.controles[1]
         for u in sol.controles
@@ -476,18 +468,17 @@ end
     @test abs(V0 - rd["J"]) < 0.01 * rd["J"]
     lc = lazo_cerrado(par, sol)
     @test 0.0 <= lc.J - rd["J"] < 5e-3
-    @test lc.J - rd["J"] < 5e-4   # H01: propagando un dt completo daba 2,17e-3; con el tiempo restante, 1,59e-4
+    # Con el tiempo restante hasta el nodo, y no un dt completo, el lazo cerrado queda a menos de 5e-4 del óptimo.
+    @test lc.J - rd["J"] < 5e-4
 end
 
-# ### objetivo2.jl · F1 tareas 1.1 a 1.3 (sistema linealizado)
-# Criterios fijados ANTES de correr, en el plan 2026-11-14 (F1). La nominal de referencia para el
-# control cruzado es la MISMA de la semilla: p = Par(), T = 2, x0 = (1, 0.3), u(t) = 0.5 + 0.1 sin t,
-# más las dos de reposo (x = (1,0), u ≡ 0) con n = 2 y n = 1, que son las tres que la semilla calcula.
+# Objetivo 2, sistema linealizado. La nominal de referencia es la misma de la semilla: x0 = (1, 0.3), T = 2 y
+# u(t) = 0.5 + 0.1 sin t, más dos de reposo (x = (1, 0), u ≡ 0) con n = 2 y n = 1.
 U_SEM(t) = 0.5 + 0.1 * sin(t)
 X0_SEM = SVector(1.0, 0.3)
 _nom_sem() = nominal_control(con(PAR; n = 2.0), U_SEM, X0_SEM; T = 2.0)
 _nom_reposo(n) = nominal_control(con(PAR; n), _ -> 0.0, SVector(1.0, 0.0); T = 2.0)
-# Memoizada: cada `semilla_lectura()` recorre las 8 identidades en BigFloat, y seis testsets la piden.
+# Memoizada: semilla_lectura() es cara (identidades en BigFloat) y varias pruebas la piden.
 _SEM_CACHE = Ref{Any}(nothing)
 _sem() = (_SEM_CACHE[] === nothing && (_SEM_CACHE[] = semilla_lectura()); _SEM_CACHE[])
 
@@ -529,12 +520,11 @@ end
           _nom_reposo(caso == "reposo_n1" ? 1.0 : 2.0)
     W = gramiano_controlabilidad(nom; T = 2.0)
     @test maximum(abs.(W - W')) < 1e-12 * max(1.0, maximum(abs, W))
-    ref = _sem()["gramianos_$caso"]["controlabilidad"]          # valores propios, BigFloat → Float64
+    ref = _sem()["gramianos_$caso"]["controlabilidad"]
     mios = eigvals(Symmetric(Matrix(W)))
-    # La semilla integra la EDO de Lyapunov W' = AW + WA' + BB'; acá es cuadratura sobre Φ(T,s).
-    # Dos caminos distintos: el criterio es 1e-8 relativo al mayor valor propio.
+    # La semilla integra la EDO de Lyapunov W' = AW + WA' + BB'; aquí es cuadratura sobre Φ(T,s), otro camino.
     @test maximum(abs.(mios - ref)) < 1e-8 * max(1.0, maximum(abs, ref))
-    @test minimum(mios) > -1e-12 * max(1.0, maximum(mios))      # semidefinida positiva
+    @test minimum(mios) > -1e-12 * max(1.0, maximum(mios))
 end
 
 @testset "1.2 energía mínima: alcanza el blanco y su energía es zᵀW⁻¹z" begin
@@ -542,18 +532,17 @@ end
     W = gramiano_controlabilidad(nom; T = 2.0)
     zT = SVector(0.013, -0.021)
     em = energia_minima(nom, zT; T = 2.0)
-    # Integrar el sistema LINEAL con ese control: z(T) tiene que dar zT.
+    # Integrando el sistema lineal con ese control se llega a zT.
     z = integrar((y, t) -> let (A, B) = matrices_lineales(nom, t); A * y + B * em.u(t) end,
                  SVector(0.0, 0.0), (0.0, 2.0)).u[end]
     @test maximum(abs.(z - zT)) < 1e-8 * max(1.0, maximum(abs, zT))
     @test abs(em.energia - dot(zT, Symmetric(Matrix(W)) \ Vector(zT))) < 1e-9 * abs(em.energia)
-    # Y su energía es la mínima: ∫u² = zᵀW⁻¹z, medida por cuadratura sobre el control devuelto.
+    # Y su energía ∫u² es zᵀW⁻¹z, medida por cuadratura.
     @test abs(quadgk(s -> em.u(s)^2, 0.0, 2.0; rtol = 1e-12)[1] - em.energia) < 1e-8 * abs(em.energia)
 end
 
 @testset "1.2 Kalman congelado: la degeneración vive en P = 0" begin
-    # Criterio fijado antes: en reposo (P ≡ 0) con n = 2, ∂F/∂ℓ = ∂F/∂P = 0 y la primera fila de A
-    # se anula, así que [B AB] pierde rango. Fuera de P = 0 el rango es 2.
+    # En reposo (P ≡ 0) con n = 2 se anula la primera fila de A y [B AB] pierde rango; fuera de P = 0 el rango es 2.
     k0 = kalman_congelado(_nom_reposo(2.0), 1.0)
     @test k0.rango == 1 && k0.sv[2] / k0.sv[1] < 1e-10
     kp = kalman_congelado(_nom_sem(), 1.0)
@@ -573,19 +562,19 @@ end
 @testset "1.3 la presión observa ℓ: norma L² = forma cuadrática del Gramiano" begin
     nom = _nom_sem()
     M = gramiano_observabilidad(nom; T = 2.0)
-    δ = SVector(1.0, 0.0)                     # perturbación solo en ℓ
-    # (a) En el sistema lineal es una identidad: ∫|CΦδ|² ds = δᵀMδ. Control de implementación.
+    δ = SVector(1.0, 0.0)
+    # (a) En el sistema lineal, con δ solo en ℓ, ∫|CΦδ|² ds = δᵀMδ es una identidad: control de implementación.
     Φ = fundamental_densa(nom, 0.0, 2.0)
     l2 = quadgk(s -> (Φ(s) * δ)[2]^2, 0.0, 2.0; rtol = 1e-12, atol = 1e-14)[1]
     @test abs(l2 - dot(δ, M * δ)) < 1e-8 * abs(l2)
-    # (b) En el sistema NO lineal, con ε = 1e-4, la razón tiende a 1 con error O(ε). Esto es lo que
-    #     hace honesto el enunciado «se observa ℓ a través de P»: criterio fijado antes, < 1e-2.
+    # (b) En el no lineal, con ε = 1e-4, la razón tiende a 1 con error O(ε): eso sostiene que ℓ se observa a través
+    # de P.
     ε = 1e-4
     xa = integrar((y, t) -> f(y, nom.u(t), nom.p), X0_SEM, (0.0, 2.0))
     xb = integrar((y, t) -> f(y, nom.u(t), nom.p), X0_SEM + ε * δ, (0.0, 2.0))
     l2nl = quadgk(s -> ((xb(s)[2] - xa(s)[2]) / ε)^2, 0.0, 2.0; rtol = 1e-10)[1]
     @test abs(l2nl / dot(δ, M * δ) - 1) < 1e-2
-    @test l2nl > 0                            # la presión SÍ cambia cuando cambia ℓ
+    @test l2nl > 0
 end
 
 @testset "1.3 observabilidad congelada: en reposo ℓ no se observa" begin
@@ -595,16 +584,9 @@ end
     @test op.rango == 2 && op.sv[2] / op.sv[1] > 1e-10
 end
 
-# ### objetivo2.jl · F1 tarea 1.4 (LQ de seguimiento por Riccati)
-# Honestidad del ciclo: `riccati` y `lazo_cerrado` se escribieron junto con el resto de objetivo2.jl,
-# así que ESTAS pruebas no vieron la fase roja de «función no definida» como las de 1.1–1.3. Lo que sí
-# cubren es el error que de verdad se cuela acá: el signo de K, que sin la prueba de perturbación nula
-# pasa desapercibido porque el lazo igual converge a algo parecido.
-#
-# Los pesos NO son de adorno: Qf = diag(w_T, 0), Q = diag(0, w_p) y R = w_q son la segunda variación
-# del costo original Φ(x(T)) + ∫L, o sea el LQ que sale de este problema (Gauss–Newton: se omite la
-# segunda derivada de f contra el adjunto). Para las pruebas estructurales se usa además Q = Qf = I,
-# donde P sí es definida positiva y el criterio se puede escribir sin ambigüedad.
+# LQ de seguimiento por Riccati. Los pesos Qf = diag(wT, 0), Q = diag(0, wp) y R = wq son la segunda variación del
+# costo (Gauss-Newton: sin la segunda derivada de f contra el adjunto). Las pruebas estructurales usan Q = Qf = I,
+# donde P es definida positiva. La de perturbación nula es la que detecta un signo cambiado en K.
 _pesos_problema(p) = (Q = SMatrix{2,2}(0.0, 0.0, 0.0, p.wp), Qf = SMatrix{2,2}(p.wT, 0.0, 0.0, 0.0), R = p.wq)
 
 @testset "1.4 Riccati: simétrica, definida positiva y satisface su EDO" begin
@@ -613,9 +595,9 @@ _pesos_problema(p) = (Q = SMatrix{2,2}(0.0, 0.0, 0.0, p.wp), Qf = SMatrix{2,2}(p
     for t in range(0.0, PAR.T, length = 20)
         Pt = P(t)
         @test maximum(abs.(Pt - Pt')) < 1e-12 * max(1.0, maximum(abs, Pt))
-        @test minimum(eigvals(Symmetric(Matrix(Pt)))) > 0          # definida positiva con Q = Qf = I
+        @test minimum(eigvals(Symmetric(Matrix(Pt)))) > 0
     end
-    # Residual de -Ṗ = PA + A'P - PBR⁻¹B'P + Q por diferencias finitas centradas.
+    # Residuo de -Ṗ = PA + AᵀP - PBR⁻¹BᵀP + Q por diferencias finitas centradas.
     h = 1e-5
     for t in range(h, PAR.T - h, length = 20)
         A, B = matrices_lineales(nom, t)
@@ -637,11 +619,8 @@ end
 end
 
 @testset "1.4 el experimento: LQ contra lazo abierto bajo perturbación ($cual)" for cual in ("P0", "eta")
-    # Criterio fijado ANTES de correr: el LQ reduce la DESVIACIÓN TERMINAL respecto de la nominal,
-    # |ℓ(T) − ℓ̄(T)|, en al menos un factor 3 frente al lazo abierto. El plan escribió el criterio sobre
-    # |ℓ(T) − ℓ_d|; se cambia a la desviación de la nominal, y la razón se declara acá antes de medir:
-    # el óptimo del directo NO lleva ℓ(T) a ℓ_d (hay compromiso con el costo), así que ℓ_d no es lo que
-    # este controlador persigue. Un LQ de seguimiento sigue la nominal. Las dos métricas se reportan.
+    # El LQ debe reducir al menos tres veces la desviación terminal |ℓ(T) - ℓ̄(T)| frente al lazo abierto. Se mide contra
+    # la nominal y no contra ℓd porque el óptimo no lleva ℓ(T) a ℓd: un LQ de seguimiento sigue la nominal.
     nom = nominal_optima(PAR, optimizar(PAR, 25).x)
     w = _pesos_problema(PAR)
     P = riccati(nom; w.Q, w.R, w.Qf)
@@ -651,13 +630,12 @@ end
     cerrado = lazo_cerrado(nom, P; x0 = x0p, p = pp, w.R)
     ℓT = nom.x(PAR.T)[1]
     da, dc = abs(abierto.xT[1] - ℓT), abs(cerrado.xT[1] - ℓT)
-    @test da > 1e-6                       # control: la perturbación SÍ mueve el estado terminal
+    @test da > 1e-6
     @test dc < da / 3
 end
 
-# ### F2 · el acuerdo entre los tres métodos
-# `acuerdo()` corre el disparo, la cascada del directo hasta N = 400 y los tres niveles de HJB (~15 s).
-# Memoizado con un Ref, como `_sem()`: tres testsets lo piden y correrlo tres veces no agrega información.
+# Acuerdo de los tres métodos. acuerdo() es caro (disparo, directo hasta N = 400 y tres mallas de HJB), así que se
+# memoiza como _sem().
 _ACU_CACHE = Ref{Any}(nothing)
 _acu() = (_ACU_CACHE[] === nothing && (_ACU_CACHE[] = acuerdo()); _ACU_CACHE[])
 
@@ -665,8 +643,7 @@ _acu() = (_ACU_CACHE[] === nothing && (_ACU_CACHE[] = acuerdo()); _ACU_CACHE[])
     a = _acu()[1]
     @test a["criterios"]["disparo_converge"]
     @test a["criterios"]["tres_metodos_coinciden_en_J"]
-    # Control de que la tolerancia SÍ discrimina: el mejor control constante (J = 0,396738, del
-    # objetivo 3) está 6,7 % arriba del óptimo, muy fuera de la tolerancia de 5e-4 del criterio.
+    # La tolerancia discrimina: la mejor constante está 6,7 % sobre el óptimo, muy fuera de 5e-4.
     @test abs(0.3967375482981293 - a["J_disparo"]) / a["J_disparo"] > 5e-4
 end
 
@@ -682,15 +659,14 @@ end
     @test a["criterios"]["sup_dU_directo_baja"]
     @test a["criterios"]["sup_dU_hjb_baja"]
     @test maximum(f["sup_dU"] for f in a["directo"]) < 0.05
-    # Control: la misma métrica contra el mejor control constante (U = 0,791) tiene que dar un
-    # número grande. Si no, «sup|ΔU| chico» no estaría midiendo acuerdo entre curvas.
+    # Control: contra la mejor constante (U = 0,791) la misma métrica da un número grande.
     @test maximum(abs.(d.pmp.U .- 0.7913865447989883)) > 0.25
 end
 
-# ---- F3 · sensibilidades, calibre e identificabilidad -------------------------------------------
+# Sensibilidades de la presión, simetrías de calibre e identificabilidad.
 TS_SENS = collect(range(0.1, 2.0, length = 20))
 _u_sens(t) = 0.8 + 0.3 * sin(2t)
-TS_DIM = collect(range(0.02, 4.0, length = 200))     # la misma malla del .py de MA5306
+TS_DIM = collect(range(0.02, 4.0, length = 200))
 _q_uno(_) = 1.0
 
 @testset "3.1 sensibilidades: la EDO aumentada contra diferencias finitas centradas ($par)" for par in
@@ -704,7 +680,7 @@ _q_uno(_) = 1.0
     num = (Pmas .- Pmen) ./ 2h
     esc = max(1e-3, maximum(abs, num))
     @test maximum(abs, S .- num) < 1e-6 * esc
-    # Control de que la escala del criterio discrimina: la sensibilidad no es cero.
+    # Control: la sensibilidad no es cero, así que la escala del criterio discrimina.
     @test maximum(abs, num) > 1e-3
 end
 
@@ -715,7 +691,7 @@ end
         @test maximum(abs, J[:, j] - sens_presion(p, _u_sens, TS_SENS; pars = (par,))[:, 1]) <
               1e-9 * max(1.0, maximum(abs, J[:, j]))
     end
-    # Relativa = θ_j por la columna: ∂P/∂log θ_j.
+    # Relativa: θ_j por la columna, o sea ∂P/∂log θ_j.
     Jr = sens_presion(p, _u_sens, TS_SENS; relativa = true)
     for (j, par) in enumerate(PARS_SENS)
         @test maximum(abs, Jr[:, j] - getfield(p, par) * J[:, j]) < 1e-12 * max(1.0, maximum(abs, Jr[:, j]))
@@ -727,15 +703,14 @@ end
     ref = presion_dim(DIM_BASE, nn, 0.3, _q_uno, TS_DIM)
     esc = maximum(abs, ref)
     esc > 0.1 || error("el caso base dimensional no presuriza: esc = $esc")
-    # Amplitud FINITA, no infinitesimal: a = 2 y b = 3 son factores 2 y 3 en los parámetros. Una
-    # dirección «casi nula» se separaría acá; una simetría exacta, no.
+    # Amplitud finita (factores 2 y 3 en los parámetros): una dirección casi nula se separaría aquí; una simetría
+    # exacta, no.
     for (sa, sb) in ((0.1, 0.0), (log(2.0), 0.0), (0.0, log(3.0)), (log(2.0), log(3.0)))
         θ = mover_log(mover_log(DIM_BASE, calibre_escala(nn), sa), calibre_vk(nn), sb)
         d = presion_dim(θ, nn, 0.3, _q_uno, TS_DIM) .- ref
         @test maximum(abs, d) < 1e-10 * esc
     end
-    # Controles negativos: dos direcciones que NO son del calibre mueven la presión 6 a 11 órdenes
-    # de magnitud más. Sin esto, «la diferencia es 1e-14» no diría nada.
+    # Control: dos direcciones que no son del calibre mueven la presión entre 6 y 11 órdenes más.
     for k in (:C, :E)
         dir = merge(map(_ -> 0.0, DIM_BASE), NamedTuple{(k,)}((1.0,)))
         d = presion_dim(mover_log(DIM_BASE, dir, 0.1), nn, 0.3, _q_uno, TS_DIM) .- ref
@@ -750,7 +725,7 @@ end
         for (nombre, w) in invariantes(nn)
             @test abs(monomio(θ, w) - monomio(DIM_BASE, w)) < 1e-12 * abs(monomio(DIM_BASE, w))
         end
-        # Control: E solo (que no es invariante) sí se mueve, salvo en la dirección v₀–K, que no lo toca.
+        # Control: E solo, que no es invariante, sí se mueve, salvo en la dirección v₀–K, que no lo toca.
         mE = monomio(θ, merge(map(_ -> 0.0, DIM_BASE), (E = 1.0,)))
         sa == 0.0 || @test abs(mE - DIM_BASE.E) > 0.5 * DIM_BASE.E
     end
@@ -760,17 +735,16 @@ end
     nn = 2.0
     J = jacobiano_dim(DIM_BASE, nn, 0.3, _q_uno, TS_DIM)
     sv = svdvals(J) ./ svdvals(J)[1]
-    # Referencia: la corrida del 14-nov de 2026-10-16-fisher-ma4703.py (q constante, 6 parámetros
-    # libres), que imprime 1.0e+00 8.8e-02 4.2e-04 1.7e-05 2.2e-10 2.3e-11. Acá el integrador es
-    # Vern9 y allá Radau: coincidir en los cuatro grandes cruza dos implementaciones.
+    # Valores singulares de referencia de una corrida independiente en Python con Radau (q constante, seis parámetros
+    # libres): 1, 8,8e-2, 4,2e-4, 1,7e-5 y dos en el piso de ruido. Aquí se integra con Vern9.
     for (k, ref) in zip(2:4, (8.8e-2, 4.2e-4, 1.7e-5))
         @test abs(sv[k] - ref) < 0.1 * ref
     end
-    # Los dos chicos están en el piso de ruido de las diferencias finitas, no en un valor con sentido.
+    # Los dos menores solo tienen que quedar en el piso de ruido de las diferencias finitas.
     @test sv[5] < 1e-7 && sv[6] < 1e-7
-    # Y el núcleo numérico cae en el subespacio que generan las DOS direcciones derivadas a mano.
+    # Y el núcleo numérico cae en el subespacio de las dos direcciones derivadas a mano.
     @test residuo_nucleo(J, (calibre_escala(nn), calibre_vk(nn))) < 1e-3
-    # Control: un subespacio equivocado (dos direcciones cualesquiera) da residuo de orden 1.
+    # Control: un subespacio equivocado da residuo de orden 1.
     @test residuo_nucleo(J, (merge(map(_ -> 0.0, DIM_BASE), (E = 1.0,)),
                              merge(map(_ -> 0.0, DIM_BASE), (C = 1.0,)))) > 0.5
 end
@@ -779,9 +753,8 @@ end
         (2.0, 3.0)
     ref = presion_dim(DIM_BASE, nn, 0.3, _q_uno, TS_DIM)
     esc = maximum(abs, ref)
-    # El exponente de L₀ en la dirección de escala es 1 exacto. Si fuera «aproximadamente 1», la
-    # invariancia a amplitud finita (a = 2) se caería: esto mide cuánto, y es el control de que el
-    # 1e-14 de los testsets anteriores viene del calibre y no de que el modelo sea insensible a L₀.
+    # El exponente de L0 en la dirección de escala es exactamente 1: moverlo un poco rompe la invariancia a amplitud
+    # finita, lo que muestra que el 1e-14 anterior viene del calibre y no de que la presión no dependa de L0.
     errores = Float64[]
     for δ in (0.0, 0.01, 0.05, 0.2)
         dir = merge(calibre_escala(nn), (L0 = 1.0 + δ,))
@@ -790,13 +763,13 @@ end
     end
     @test errores[1] < 1e-10
     @test all(e > 1e-4 for e in errores[2:end])
-    # Control de discriminación: el salto entre el exponente exacto y el 1 % es de varios órdenes.
+    # Control: el salto entre el exponente exacto y el de 1 % es de varios órdenes.
     @test errores[2] > 1e5 * max(errores[1], 1e-16)
-    # Y es monótono en δ: no es un número suelto que pasó por casualidad.
+    # Y el error crece con δ.
     @test issorted(errores)
 end
 
-# ---- F3.2 · la matriz de información de Fisher --------------------------------------------------
+# Matriz de información de Fisher.
 TS_FISHER = collect(range(0.2, 2.0, length = 40))
 
 @testset "3.2 Fisher: M es simétrica, ⪰ 0, y con un solo instante tiene rango 1" begin
@@ -806,8 +779,7 @@ TS_FISHER = collect(range(0.2, 2.0, length = 40))
     ev = eigvals(Symmetric(Matrix(M)))
     @test minimum(ev) > -1e-6 * maximum(ev)
     @test rank(Matrix(M); rtol = 1e-10) == length(PARS_SENS)
-    # Con un solo instante M = s sᵗ/σ²: rango 1 y traza = |s|²/σ². Si el ensamblado sumara mal
-    # (por ejemplo J Jᵗ en vez de Jᵗ J), esto se cae.
+    # Con un solo instante M = s sᵀ/σ²: rango 1 y traza |s|²/σ². Si el ensamblado sumara JJᵀ en vez de JᵀJ, esto falla.
     M1 = fisher(p, _u_sens, [1.0])
     @test rank(Matrix(M1); rtol = 1e-10) == 1
     s = vec(sens_presion(p, _u_sens, [1.0]))
@@ -815,8 +787,7 @@ TS_FISHER = collect(range(0.2, 2.0, length = 40))
     # σ fija la escala y nada más: M(σ/2) = 4 M(σ).
     @test maximum(abs, Matrix(fisher(p, _u_sens, TS_FISHER; σ = SIGMA_FISHER / 2)) .-
                        4 .* Matrix(M)) < 1e-6 * maximum(abs, Matrix(M))
-    # La inflación es ≥ 1 por construcción (Cauchy–Schwarz) y acá es > 1: los parámetros se apoyan
-    # unos en otros. Si diera 1 en todos, leer 1/M_jj sería lo mismo que perfilar.
+    # La inflación es ≥ 1 por Cauchy-Schwarz y aquí es > 1: los parámetros se apoyan unos en otros, y 1/M_jj no basta.
     @test all(inflacion(M) .>= 1 - 1e-8)
     @test maximum(inflacion(M)) > 1.5
 end
@@ -824,28 +795,28 @@ end
 @testset "3.2 Fisher: Cramér–Rao predice la dispersión de mínimos cuadrados (200 réplicas)" begin
     p = Par()
     r = experimento_cramer_rao(p, _u_sens, TS_FISHER)
-    @test r.iteraciones_max < 20                      # Gauss–Newton convergió en todas las réplicas
-    # «Bien identificado» se define ANTES de mirar: cota relativa menor al 10 % del valor.
+    @test r.iteraciones_max < 20
+    # Bien identificado: cota relativa menor al 10 %. Para esos parámetros la dispersión de mínimos cuadrados debe quedar
+    # dentro de un factor 1,5 de la cota y sin sesgo apreciable.
     bien = findall(r.cota ./ abs.(r.theta) .< 0.10)
     @test !isempty(bien)
     for j in bien
-        @test 1 / 1.5 < r.razon[j] < 1.5              # dentro de un factor 1,5 de la cota
-        @test abs(r.sesgo_sobre_cota[j]) < 0.5        # el estimador no está sesgado a esta escala
+        @test 1 / 1.5 < r.razon[j] < 1.5
+        @test abs(r.sesgo_sobre_cota[j]) < 0.5
     end
-    # Control de que la cota no es un número cualquiera: con σ diez veces más chico, la cota baja
-    # diez veces y la RAZÓN empírica/cota no se mueve (es invariante en σ en el régimen lineal).
+    # Con σ diez veces menor la cota baja diez veces y la razón empírica/cota no se mueve.
     r2 = experimento_cramer_rao(p, _u_sens, TS_FISHER; σ = SIGMA_FISHER / 10, replicas = 50)
     @test maximum(abs, r2.cota .* 10 .- r.cota) < 1e-3 * maximum(r.cota)
     for j in bien
         @test 1 / 1.5 < r2.razon[j] < 1.5
     end
-    # Control de mutación: comparar contra 1/sqrt(M_jj) —la varianza con los demás FIJOS, que es la
-    # trampa— da un número demasiado chico justo en los parámetros que se apoyan en otros.
+    # Control: 1/√M_jj, la varianza con los demás parámetros fijos, da un número demasiado chico justo donde se
+    # apoyan en otros.
     ingenua = 1 ./ sqrt.(diag(r.M))
     @test maximum(r.cota ./ ingenua) > 1.5
 end
 
-# ---- F3.3 · la frontera control ↔ información ---------------------------------------------------
+# Diseño: frontera entre costo de control e información.
 Q_DIS = [0.6, 0.9, 1.2, 1.0, 0.8, 0.7, 0.5, 0.4]
 
 @testset "3.3 diseño: el escalón del directo y el integrador de sensibilidades dan la misma presión" begin
@@ -855,11 +826,9 @@ Q_DIS = [0.6, 0.9, 1.2, 1.0, 0.8, 0.7, 0.5, 0.4]
     Pa = presion_adim(p, escalon(Q_DIS, p), ts)
     tramos = avance(Q_DIS, p)[2]
     Pd = [tramos[clamp(searchsortedlast(t, τ), 1, length(Q_DIS))](τ)[2] for τ in ts]
-    # J usa RK4 por tramos y M usa Vern9 continuo: son dos integradores del mismo sistema, y el
-    # objetivo combinado solo tiene sentido si coinciden. Esto lo mide en vez de suponerlo.
+    # J usa RK4 por tramos y M usa Vern9 continuo: el objetivo combinado solo tiene sentido si dan la misma presión.
     @test maximum(abs, Pa .- Pd) < 1e-7
-    # Control: contra otro control la diferencia es cinco órdenes mayor. Sin esto, comparar algo
-    # consigo mismo pasaría igual.
+    # Control: contra otro control la diferencia es cinco órdenes mayor.
     @test maximum(abs, presion_adim(p, escalon(reverse(Q_DIS), p), ts) .- Pd) > 1e-2
 end
 
@@ -880,18 +849,17 @@ end
     d ./= norm(d)
     fd = (psi(Q_DIS .+ 1e-5 .* d, p, γ) - psi(Q_DIS .- 1e-5 .* d, p, γ)) / 2e-5
     @test abs(dot(grad_psi(Q_DIS, p, γ), d) - fd) < 1e-5 * max(1.0, abs(fd))
-    # Control de mutación: con el término de información fuera del gradiente, la misma comparación
-    # falla por tres órdenes. Es lo que prueba que γ, el signo y los índices entran bien.
+    # Control: sin el término de información en el gradiente, la comparación falla por tres órdenes.
     @test abs(dot(gradiente(Q_DIS, p), d) - fd) > 1e-2 * max(1.0, abs(fd))
-    # Y el término pesa: su gradiente no es ruido numérico.
+    # Y ese término pesa: su gradiente no es ruido numérico.
     @test norm(grad_logdet_fisher(Q_DIS, p)) > 1e-2
-    # En γ = 0 el objetivo y el gradiente son exactamente los del directo (sin llamar a Fisher).
+    # En γ = 0 el objetivo y el gradiente son exactamente los del directo.
     @test psi(Q_DIS, p, 0.0) == avance(Q_DIS, p)[1]
     @test grad_psi(Q_DIS, p, 0.0) == gradiente(Q_DIS, p)
 end
 
 
-# ---- F4.1 · el AT2 en 1D: forward --------------------------------------------------------------
+# Phase-field AT2 en 1D: el problema directo.
 
 @testset "4.1 AT2: la rama homogénea reproduce la solución cerrada" begin
     p = ParAT2(; L = 1.0, ℓ = 1.0, N = 40, defecto = 0.0)
@@ -905,14 +873,13 @@ end
         @test maximum(abs, sol.alpha[i] .- αa) < 1e-9
         @test abs(sol.sigma[i] - σa) < 1e-9 * σa
     end
-    # El pico de la rama homogénea: ε = ε_c/√3 y σ = (3√3/16)√(E G_c/ℓ). Es LA relación conocida del
-    # AT2, y acá se mide contra el solver en vez de citarse.
+    # Pico de la rama homogénea: ε = ε_c/√3 y σ = (3√3/16)√(E G_c/ℓ), medido contra el solver.
     pk = resolver_at2([eps_pico_homogenea(p) * p.L], p)
     @test abs(pk.sigma[1] - sigma_pico_homogenea(p)) < 1e-9 * sigma_pico_homogenea(p)
     @test sigma_homogenea(0.9 * eps_pico_homogenea(p), p) < sigma_pico_homogenea(p)
     @test sigma_homogenea(1.1 * eps_pico_homogenea(p), p) < sigma_pico_homogenea(p)
-    # Control de mutación: con ε_c² = G_c/(2Eℓ) —el factor 2 que se cuela si c_w se normaliza mal— la
-    # misma comparación falla por seis órdenes. Sin esto la fórmula se verificaría sola.
+    # Control: con ε_c² = G_c/(2Eℓ), el factor 2 que aparece si c_w se normaliza mal, la comparación falla por seis
+    # órdenes.
     mal = ParAT2(; L = 1.0, ℓ = 2.0, N = 40)
     @test maximum(abs(sigma_homogenea(ε, mal) - sol.sigma[i]) for (i, ε) in enumerate(εs)) > 1e-3
 end
@@ -920,8 +887,8 @@ end
 @testset "4.1 AT2: la alternada baja la energía y la irreversibilidad congela el daño" begin
     p = ParAT2(; L = 1.0, ℓ = 0.3, N = 60, defecto = 0.0)
     εc = eps_c(p)
-    # Sube a 0,9 ε_c, descarga a 0,7 y 0,5, vuelve a 0,85 —todavía bajo el máximo histórico— y recién
-    # a 0,95 pasa de largo. Las etapas 4, 5 y 6 son las que miden la irreversibilidad.
+    # Sube a 0,9 ε_c, descarga a 0,7 y 0,5, vuelve a 0,85, bajo el máximo histórico, y recién en 0,95 lo supera.
+    # Las etapas 4, 5 y 6 miden la irreversibilidad.
     carga = [0.3, 0.6, 0.9, 0.7, 0.5, 0.85, 0.95] .* εc .* p.L
     sol = resolver_at2(carga, p)
     @test sol.kkt < 1e-12
@@ -929,26 +896,24 @@ end
     for k in 2:length(carga)
         @test minimum(sol.alpha[k] .- sol.alpha[k - 1]) > -1e-14
     end
-    # En las tres etapas bajo el máximo histórico α queda congelado BIT A BIT, y el conjunto activo es
-    # todo el dominio: ahí la derivada del estado respecto de la carga es cero, y eso es lo que el
-    # adjunto de F4.2 congela.
+    # Bajo el máximo histórico α queda congelado bit a bit y el conjunto activo es todo el dominio: ahí la derivada del
+    # estado respecto de la carga es cero, que es lo que congela el adjunto.
     for k in (4, 5, 6)
         @test all(sol.activos[k])
         @test sol.alpha[k] == sol.alpha[3]
     end
-    # Y al pasar de largo se descongela entero y el daño vuelve a crecer.
+    # Al superarlo se descongela entero y el daño vuelve a crecer.
     @test count(sol.activos[7]) == 0
     @test maximum(sol.alpha[7]) > maximum(sol.alpha[3]) + 1e-3
     # La energía reducida no crece en ningún barrido de la alternada.
     r = alternancia_at2(zeros(p.N + 1), p, 0.9 * εc * p.L)
-    # Dos barridos, no más: en la barra homogénea el paso en α da el α uniforme EXACTO de una vez y el
-    # segundo barrido solo comprueba que no se movió. Medido el 14-nov; con defecto son decenas.
+    # Sin defecto bastan dos barridos: el paso en α da el α uniforme exacto de una vez y el segundo solo lo confirma.
     @test length(r.energias) == 2
     @test length(alternancia_at2(zeros(p.N + 1), ParAT2(; ℓ = 0.3, N = 60, defecto = 0.3),
                                  0.9 * εc * p.L).energias) > 10
     @test maximum(diff(r.energias)) <= 1e-12 * maximum(abs, r.energias)
-    # Control de mutación: sin la cota inferior el paso en α de la descarga SÍ devuelve daño, así que
-    # lo que congela α es la irreversibilidad y no que el problema no tenga por dónde bajar.
+    # Control: sin la cota inferior, el paso en α de la descarga sí devuelve daño; lo que congela α es la
+    # irreversibilidad.
     A3 = sol.alpha[3]
     H, b = qp_alpha(respuesta_u(A3, p, carga[5]), p)
     libre = copy(A3)
@@ -957,10 +922,9 @@ end
 end
 
 @testset "4.1 AT2: con cotas naturales en α la localización se va al BORDE, no al defecto" begin
-    # Hallazgo medido el 14-nov, no predicción: el nodo del borde tiene la mitad de la masa disipativa
-    # de un nodo interior y un solo vecino que lo penalice en α', así que es el punto más débil de la
-    # barra y se rompe ahí aunque el defecto esté en el centro. Queda como prueba de regresión porque
-    # es la razón por la que las pruebas de localización fijan α = 0 en los extremos.
+    # Con cotas naturales, el nodo del borde tiene la mitad de la masa disipativa y un solo vecino que lo penalice en α',
+    # así que la barra se rompe ahí aunque el defecto esté al centro. Por eso las pruebas de localización fijan α = 0
+    # en los extremos.
     for (fb, esperado) in ((false, :borde), (true, :centro))
         q = ParAT2(; ℓ = 0.3, N = 60, defecto = 0.3, fija_borde = fb)
         s = resolver_at2(collect(range(0.1, 1.3; length = 25)) .* eps_c(q) .* q.L, q)
@@ -980,42 +944,35 @@ end
     base = (; L = 1.0, ℓ = 0.25, defecto = 0.4, ancho = 0.1, fija_borde = true)
     ps = [pico(ParAT2(; base..., N = n)) for n in (40, 80, 160)]
     d1, d2 = abs(ps[2] - ps[1]), abs(ps[3] - ps[2])
-    # Criterio fijado ANTES de medir: al duplicar la malla el error se divide por al menos 1,8, o sea
-    # orden ≥ 0,85. Medido: razón 4,00, orden 2,00 —P1 da orden 2 en la carga de ruptura—, y el orden
-    # observado queda en el json del objetivo 5. El criterio no se retocó para calzar con lo medido.
+    # Al duplicar la malla el error debe dividirse al menos por 1,8 (orden ≥ 0,85); con elementos P1 se observa orden 2.
     @test d2 < d1 / 1.8
-    # ⚠️ Acá había un supuesto FALSO, y queda escrito porque el error es instructivo: «un pico
-    # localizado queda por debajo del de la rama homogénea». No: medido el 14-nov, 0,7709 contra
-    # 0,6495. Fijar α = 0 en los extremos es una RESTRICCIÓN extra, así que sube la energía y la barra
-    # con bordes reforzados es MÁS resistente que la rama homogénea libre, defecto incluido. Lo que sí
-    # se puede exigir —y es lo que dice «localiza»— es que el daño se concentre en el defecto: en el
-    # centro es varias veces el de los cuartos.
+    # Fijar α = 0 en los extremos es una restricción extra, así que la barra resiste más que la rama homogénea libre,
+    # aun con defecto. Lo que se exige es que el daño se concentre en el defecto: en el centro es varias veces el de
+    # los cuartos.
     q = ParAT2(; base..., N = 160)
     af = resolver_at2(collect(range(0.1, 1.3; length = 30)) .* eps_c(q) .* q.L, q).alpha[end]
-    # Perfil medido (N=160): 0 → 0,155 (x=⅛) → 0,315 (x=¼) → 0,546 → 0,999 (centro). La banda es
-    # ancha porque ℓ es un cuarto de L, así que la razón contra el cuarto es 3,17 y contra el
-    # octavo 6,46; los umbrales son ésos menos un margen.
+    # Con ℓ = L/4 la banda dañada es ancha: el daño en el centro es unas 3,2 veces el de x = 1/4 y 6,5 veces el de
+    # x = 1/8, y los umbrales son esos valores menos un margen.
     @test af[q.N ÷ 2 + 1] > 2.5 * af[q.N ÷ 4 + 1]
     @test af[q.N ÷ 2 + 1] > 5 * af[q.N ÷ 8 + 1]
     @test ps[3] > sigma_pico_homogenea(ParAT2(; ℓ = 0.25))
-    # Invariancia exacta de escala: con L/ℓ, h/ℓ y ancho/ℓ fijos, σ_pico·√(ℓ/(E G_c)) no se mueve. Es
-    # la ley ℓ^(-1/2) medida sin ajustar ninguna recta.
+    # Invariancia de escala: con L/ℓ, h/ℓ y ancho/ℓ fijos, σ_pico·√(ℓ/(E G_c)) no cambia. Es la ley ℓ^(-1/2) sin
+    # ajustar rectas.
     a = ParAT2(; L = 1.0, ℓ = 0.25, defecto = 0.4, ancho = 0.1, N = 80, fija_borde = true)
     b = ParAT2(; L = 2.0, ℓ = 0.50, defecto = 0.4, ancho = 0.2, N = 80, fija_borde = true)
     pa, pb = pico(a), pico(b)
     @test abs(pa * sqrt(a.ℓ) - pb * sqrt(b.ℓ)) < 1e-9 * pa * sqrt(a.ℓ)
-    # Control de mutación: sin el √ℓ los dos números difieren en un 29 %, así que la invariancia no es
-    # la trivialidad de comparar algo consigo mismo.
+    # Control: sin el √ℓ los dos números difieren en 29 %.
     @test abs(pa - pb) > 0.2 * pa
 end
 
-# ---- F4.2 · el adjunto discreto y el gradiente -------------------------------------------------
+# AT2: adjunto discreto y gradiente.
 
 @testset "4.2 AT2: el residuo y el Hessiano REDUCIDOS son los que el adjunto necesita" begin
     p = ParAT2(; L = 1.0, ℓ = 0.3, N = 40, defecto = 0.0)
     εc = eps_c(p)
     d = 0.9 * εc * p.L
-    # Fuera del estado convergido: ahí el residuo es cero y compararlo con cualquier cosa pasa igual.
+    # Se evalúa fuera del estado convergido, donde el residuo es cero y cualquier comparación pasaría.
     A = min.(resolver_at2([0.3, 0.6, 0.9] .* εc .* p.L, p).alpha[end] .+
              0.07 .* sin.(range(0, 7; length = p.N + 1)) .^ 2, 0.9)
     H, b = qp_alpha(respuesta_u(A, p, d), p)
@@ -1030,13 +987,12 @@ end
         fd = (residuo_at2(A .+ e, p, d) .- residuo_at2(A .- e, p, d)) ./ (2τ)
         @test maximum(abs, Hr[:, j] .- fd) < 1e-7 * maximum(abs, fd)
     end
-    # Y el término de rango uno —el precio de haber eliminado u— no es ruido: mueve el Hessiano.
+    # Y el término de rango uno, que viene de eliminar u, sí mueve el Hessiano.
     @test maximum(abs, Hr .- hessiano_at2(A, p, d; rango1 = false)) > 1e-5 * maximum(abs, Hr)
 end
 
 @testset "4.2 AT2: el gradiente adjunto ES la derivada donde el conjunto activo no cambia" begin
-    # ÉSTA es la prueba que decide si el objetivo 5 existe: sin gradiente verificado no hay control
-    # óptimo en el modelo de EDP, solo una analogía.
+    # Sin un gradiente verificado no hay control óptimo en el modelo phase-field, solo una analogía.
     p = ParAT2(; L = 1.0, ℓ = 0.3, N = 40, defecto = 0.0)
     εc = eps_c(p)
     K = 8
@@ -1050,11 +1006,10 @@ end
     τ = 1e-6 * εc * p.L
     for dir in (normalize(ones(K)), normalize(collect(1.0:K)), [k == 4 ? 1.0 : 0.0 for k in 1:K])
         fd = (costo(carga .+ τ .* dir) - costo(carga .- τ .* dir)) / (2τ)
-        @test abs(dot(r.grad, dir) - fd) < 1e-5 * max(1.0, abs(fd))   # medido: 1e-10
+        @test abs(dot(r.grad, dir) - fd) < 1e-5 * max(1.0, abs(fd))
     end
-    # Control de mutación: con el adjunto del PASO EN α —el que saldría de «derivar el solver», sin el
-    # término de rango uno— el gradiente sale con el SIGNO CAMBIADO. Es lo que prueba que la
-    # eliminación de u está en el adjunto y no solo en el forward.
+    # Control: con el adjunto del paso en α, sin el término de rango uno, el gradiente sale con el signo cambiado; la
+    # eliminación de u tiene que estar también en el adjunto.
     rs = gradiente_at2(carga, p; objetivo = blancos, omega = om, rango1 = false)
     dir = normalize(ones(K))
     fd = (costo(carga .+ τ .* dir) - costo(carga .- τ .* dir)) / (2τ)
@@ -1063,20 +1018,16 @@ end
 end
 
 @testset "4.2 AT2: donde el conjunto activo CAMBIA el adjunto no es la derivada, y eso es el resultado" begin
-    # La etapa 4 sostiene la carga de la 3. Ahí α está en la cota de irreversibilidad con multiplicador
-    # cero: subir d₄ hace crecer el daño, bajarlo lo deja congelado. La aplicación carga→estado tiene
-    # un quiebre y no hay derivada. El adjunto con el conjunto activo congelado da la derivada de la
-    # RAMA, que no es la misma cosa, y esta prueba está escrita para medir el desacuerdo en vez de
-    # taparlo: es la evidencia numérica de que la aplicación carga→estado no es diferenciable, y por
-    # eso el PMP clásico no está disponible. ⚠️ CORREGIDO 14-nov: antes decía «en EDP solo se tiene
-    # C-estacionariedad», atribución FALSA; ese nombre es de Hintermüller-Kopacka 2009, no de
-    # Neitzel-Wick-Wollner. Ver docs/marco/objetivo5-phase-field.md § 4.2.
+    # La etapa 4 sostiene la carga de la 3: α está en la cota de irreversibilidad con multiplicador cero, y subir d₄ hace
+    # crecer el daño mientras que bajarlo lo deja congelado. La aplicación carga → estado tiene ahí un quiebre, y el
+    # adjunto con el conjunto activo congelado da la derivada de una rama. La prueba mide ese desacuerdo: es la evidencia
+    # numérica de que ahí no hay derivada y de que el PMP clásico no está disponible.
     p = ParAT2(; L = 1.0, ℓ = 0.3, N = 40, defecto = 0.0)
     εc = eps_c(p)
     carga = [0.4, 0.6, 0.8, 0.8, 0.9] .* εc .* p.L
     obj, om = 0.25, 0.2
     r = gradiente_at2(carga, p; objetivo = obj, omega = om)
-    @test r.congelados[4] > 0            # el conjunto activo de la etapa 4 no es vacío ni es todo
+    @test r.congelados[4] > 0
     @test r.congelados[4] < p.N + 1
     @test all(==(0), r.congelados[[1, 2, 3, 5]])
     costo(c) = costo_at2(resolver_at2(c, p); objetivo = obj, omega = om).J
@@ -1088,21 +1039,16 @@ end
         der = (costo(carga .+ τ .* e4) - base) / τ
         izq = (base - costo(carga .- τ .* e4)) / τ
         cen = (der + izq) / 2
-        # Las dos derivadas laterales difieren por un factor grande (medido: 32), y el adjunto no es
-        # ninguna de las dos ni su promedio.
+        # Las derivadas laterales difieren en un factor grande y el adjunto no coincide con ninguna ni con su promedio.
         @test izq > 3 * der
-        # ⚠️ CORREGIDO 14-nov ~21:30. Antes era `@test abs(r.grad[4] - cen) > 0.05 * abs(cen)`, que
-        # se pone ROJO (0,0492 < 0,05) al perturbar ℓ en 3,3e-12 relativo: pinchaba el desempate de
-        # redondeo del conjunto activo, no el quiebre. Separación a LAS DOS laterales, que aguanta las
-        # cinco corridas de docs/marco/re-medicion-impugnados/ (mínimo 1,507).
+        # La separación se mide contra las dos laterales y no contra el promedio, que es sensible al desempate por redondeo
+        # del conjunto activo.
         @test min(abs(r.grad[4] / der), abs(izq / r.grad[4])) > 1.25
         push!(razones, izq / der)
     end
-    # Y es un QUIEBRE, no ruido numérico: al bajar τ cien veces la razón entre las derivadas laterales
-    # no se mueve. Un error de truncamiento sí se movería.
+    # Es un quiebre y no ruido: al bajar τ cien veces, la razón entre las laterales no cambia.
     @test abs(razones[1] - razones[2]) < 0.01 * razones[1]
-    # Donde el conjunto activo NO cambia, el mismo código concuerda: el desacuerdo es del punto, no
-    # del adjunto. (Control de que esta prueba no está midiendo un adjunto roto.)
+    # Control: donde el conjunto activo no cambia, el mismo código concuerda con diferencias finitas.
     limpia = [0.4, 0.6, 0.8, 0.85, 0.9] .* εc .* p.L
     r2 = gradiente_at2(limpia, p; objetivo = obj, omega = om)
     @test all(==(0), r2.congelados)
@@ -1117,37 +1063,36 @@ end
     εc = eps_c(p)
     K = 6
     blancos = collect(range(0.06, 0.38; length = K))
-    # El patrón: por rate-independencia, con omega = 0 el óptimo es invertir Λ(d) etapa por etapa.
+    # Por la independencia de la tasa, con omega = 0 el óptimo se obtiene invirtiendo Λ(d) etapa por etapa.
     dex = carga_exacta_at2(blancos, p)
     sx = resolver_at2(dex, p)
     @test maximum(abs, sx.longitud .- blancos) < 1e-10
     @test costo_at2(sx; objetivo = blancos, omega = 0.0).J < 1e-20
-    # Y el descenso proyectado sobre los incrementos lo encuentra sin saberlo.
+    # El descenso proyectado sobre los incrementos llega a ese patrón sin conocerlo.
     o = optimizar_at2(fill(dex[end] / K * 0.6, K), p; objetivo = blancos, omega = 0.0, iter = 300)
-    @test all(diff(o.historia) .< 0)                       # el costo baja monótonamente
-    @test o.J < 1e-4 * o.historia[1]          # medido: baja por un factor 1,7e4 en 300 pasos
-    @test maximum(abs, o.sol.longitud .- blancos) < 0.025 * blancos[end]   # criterio del plan: < 5 %
-    @test all(diff(o.carga) .>= 0)                          # la carga sale monótona, como se pidió
-    # Con omega > 0 el costo también baja, pero el óptimo se CORRE del patrón: el término de energía
-    # no es decoración. Sin esto, «el control llega al blanco» no distingue entre los dos problemas.
+    @test all(diff(o.historia) .< 0)
+    @test o.J < 1e-4 * o.historia[1]
+    @test maximum(abs, o.sol.longitud .- blancos) < 0.025 * blancos[end]
+    @test all(diff(o.carga) .>= 0)
+    # Con omega > 0 el óptimo se aleja del patrón: el término de energía cambia el problema.
     o2 = optimizar_at2(fill(dex[end] / K * 0.6, K), p; objetivo = blancos, omega = 0.02, iter = 200)
     @test all(diff(o2.historia) .< 0)
     @test maximum(abs, o2.carga .- dex) > 10 * maximum(abs, o.carga .- dex)
 end
 
-# ### cifras_informe.jl · las cifras del informe final
-# No se revisa cifra por cifra (son cientos): se revisa la COBERTURA (cuántas salieron), que los nombres sean
-# usables en LaTeX y únicos, y que una cifra conocida traiga el número del json y no otro.
+# Cifras del informe final: no se revisan una por una, sino la cobertura, que los nombres sirvan como macros de LaTeX
+# (solo letras y sin repetirse) y que una cifra conocida traiga el número de su json.
 @testset "cifras del informe: cobertura, nombres y una cifra contra su json" begin
     c, fuera = cifras_informe(; detalle = true)
     @test length(c) > 0
-    @test length(c) == 388                      # 377 de los cinco json de final/ + 11 del bloque `borde`
-                                                # de avance/resultados/objetivo4_hjb.json (H14), 15-nov
-    @test length(fuera) == 71                   # strings, booleanos, nulos y vectores de más de 4 componentes
+    # 388 cifras: las de los cinco json de final/ más 11 del bloque borde de HJB del avance; quedan fuera 71 valores
+    # (strings, booleanos, nulos y vectores largos).
+    @test length(c) == 388
+    @test length(fuera) == 71
     nombres = first.(c)
     @test allunique(nombres)
-    @test all(n -> occursin(r"^[A-Za-z]+$", n), nombres)   # \newcommand no acepta dígitos ni guiones
-    # La regla clave→nombre, con los dos casos que la tuercen: dígitos y separadores.
+    @test all(n -> occursin(r"^[A-Za-z]+$", n), nombres)
+    # La regla clave → nombre, con los dos casos que la complican: dígitos y separadores.
     @test trozo_nombre("J_directo_N400") == "JDirectoNCuatroCeroCero"
     @test trozo_nombre("reposo_n1") == "ReposoNUno"
     # Una cifra conocida: J del disparo en el acuerdo de los tres métodos, con 4 cifras significativas y coma.
@@ -1155,8 +1100,8 @@ end
     b = JSON.parsefile(joinpath(RES_FINAL, "acuerdo_tres_metodos.json"))
     @test round(b["J_disparo"], sigdigits = 4) == 0.3719
     @test d["acuJDisparo"] == "0{,}3719"
-    @test d["dosNTramos"] == "50"               # entero, sin decimales
-    # H14: el borde artificial de HJB, leído del json del avance. dV0 == 0 exacto es el resultado.
+    @test d["dosNTramos"] == "50"
+    # Borde artificial de HJB, leído del json del avance: dV0 = 0 exacto es el resultado.
     bh = JSON.parsefile(joinpath(RES_AVANCE, "objetivo4_hjb.json"))["borde"]
     @test bh["dV0"] == 0.0
     @test d["hjbBordeDVCero"] == "0"
