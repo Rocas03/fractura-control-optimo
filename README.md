@@ -1,5 +1,10 @@
 # Control óptimo de la tasa de inyección en un modelo reducido de fractura hidráulica
 
+<h2 align="center"><a href="https://claude.ai/artifact/1Df9xkG6aArXdK6PZSyjto">▶ Abre el póster vivo</a></h2>
+<p align="center"><b><a href="https://claude.ai/artifact/1Df9xkG6aArXdK6PZSyjto">Toca aquí</a></b>: cambia el problema y mira cómo cambian todos los gráficos del póster.</p>
+
+---
+
 Proyecto de MA4703-1 Control Óptimo: Teoría y Laboratorio (FCFM, Universidad de Chile, primavera 2026),
 profesor Héctor Ramírez C.
 
