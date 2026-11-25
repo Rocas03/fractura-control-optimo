@@ -1,6 +1,6 @@
 name = "Fractura"
 uuid = "5b3f6c1e-8d2a-4e7b-9c41-2f0a7d6e9b13"
-authors = ["Cristóbal Castellanos"]
+authors = ["Cristóbal Castellanos", "Esteban Ibarra"]
 version = "0.1.0"
 
 [deps]

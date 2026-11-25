@@ -1,6 +1,6 @@
 # Paquete `Fractura`
 
-Todo el cómputo del proyecto. Cada número y cada figura del póster y del informe sale de aquí: los scripts
+Todo el cómputo del proyecto. Los números y las figuras del informe, y los números del póster, salen de aquí: los scripts
 escriben los json de `../final/resultados/` y `../avance/resultados/`, y de esos json salen las cifras del texto.
 
 ## Qué hay en `src/`
@@ -46,8 +46,11 @@ Se corren desde la raíz del repositorio, con Julia 1.11.4 (ver el README princi
   figuras y curvas del reporte y del video de avance, en `../avance/reporte/` y `../avance/video/`.
 - `regenerar_final.jl`: resultados y figuras de la entrega final (objetivos 2 y 5, acuerdo de métodos y
   diseño de Fisher); incluye `cruce_atribucion.jl`.
+- `nominal_directo_vs_disparo.jl`: linealiza el objetivo 2 en las dos nominales, el óptimo del directo y el
+  extremal del disparo, y compara gramianos y factores del LQ (coinciden hasta la quinta cifra).
 - `bin/jl`: envoltorio que llama al binario de Julia 1.11.4 en la ruta donde lo instala `juliaup` en un Mac
   con Apple Silicon; para otra ruta, se pasa en la variable `JULIA_BIN`.
 
-Los comentarios del código citan a veces `docs/` o el reporte de avance: son notas de trabajo del proyecto que
-no forman parte de este repositorio.
+Algunas cadenas del código y de los json, y el informe final, citan `docs/` o el reporte de avance: son notas de
+trabajo del proyecto que no forman parte de este repositorio. El póster vivo no usa este paquete: tiene su propio
+motor en JavaScript, contrastado con estos resultados.

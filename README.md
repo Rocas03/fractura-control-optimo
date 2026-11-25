@@ -1,7 +1,7 @@
 # Control óptimo de la tasa de inyección en un modelo reducido de fractura hidráulica
 
-<h2 align="center"><a href="https://claude.ai/artifact/1Df9xkG6aArXdK6PZSyjto">▶ Abre el póster vivo</a></h2>
-<p align="center"><b><a href="https://claude.ai/artifact/1Df9xkG6aArXdK6PZSyjto">Toca aquí</a></b>: cambia el problema y mira cómo cambian todos los gráficos del póster.</p>
+<h2 align="center"><a href="https://rocas03.github.io/fractura-control-optimo/poster-vivo/">▶ Abre el póster vivo</a></h2>
+<p align="center"><b><a href="https://rocas03.github.io/fractura-control-optimo/poster-vivo/">Toca aquí</a></b>: cambia el problema y mira cómo se recalculan en el celular los bloques de Dinámica, Control LQ y Pontryagin.</p>
 
 ---
 
@@ -15,7 +15,9 @@ Cristóbal Castellanos y Esteban Ibarra.
 - [Póster](entrega/poster-MA4703-Castellanos-Ibarra.pdf), en la versión A0 entregada.
 - [Informe final](entrega/informe-final.pdf), 15 páginas: el modelo, las demostraciones, todas las cifras y lo
   que queda abierto.
-- [Notebook del avance](notebook/fractura.ipynb), que GitHub muestra con sus salidas y figuras.
+- [Notebook del avance](notebook/fractura.ipynb), que GitHub muestra con sus salidas y figuras. Es el de la entrega de
+  avance (objetivos 1, 3 y 4, 280 pruebas); las 720 pruebas y el resto de los objetivos están en `julia/`.
+- [Póster vivo](poster-vivo/index.html): la página interactiva, un solo HTML que calcula en el navegador.
 - [Código](julia/): el paquete de Julia que calcula cada número del póster y del informe.
 
 ## El problema
@@ -39,7 +41,7 @@ en un largo límite ℓ<sub>∞</sub>. Con caudal constante positivo nunca hay e
 
 **Control LQ (C2).** El sistema linealizado en torno a la trayectoria nominal es controlable y, midiendo solo
 la presión, observable. Si la presión inicial o η son un 20 % mayores que los nominales, el regulador LQ de
-seguimiento reduce la desviación terminal en un factor 15,2 y 3,3, respectivamente, frente al lazo abierto.
+seguimiento reduce la desviación terminal respecto de la trayectoria nominal en un factor 15,2 y 3,3, respectivamente, frente al lazo abierto.
 
 **Pontryagin (C3).** El control óptimo es U\* = proy<sub>[0, q<sub>max</sub>]</sub>(ζ<sub>P</sub> / (w<sub>q</sub> D)),
 donde ζ<sub>P</sub> es el precio sombra de la presión y D = c + ℓ² el almacenamiento. Por transversalidad
@@ -48,7 +50,7 @@ activa y el extremal concentra el caudal al inicio: la mejor rampa decreciente q
 mejor inyección constante a 6,7 %, y una constante con el mismo volumen cuesta 22 % más.
 
 **HJB y acuerdo de métodos (C4).** La ecuación de HJB se resuelve con un esquema semi-Lagrangiano en una malla
-de (ℓ, P, τ), y de ella sale una retroalimentación. El método directo (Ipopt, N = 200), el disparo sobre el
+de (ℓ, P, τ), y de ella sale una retroalimentación. El método directo (Ipopt, N = 400), el disparo sobre el
 sistema de Pontryagin y el lazo cerrado de HJB dan el mismo costo, con diferencia relativa máxima 1,4 · 10⁻⁴.
 
 **Phase-field AT2 (C5).** El problema se traslada a un modelo de daño por gradiente AT2 en una barra 1D, con
@@ -99,7 +101,7 @@ El primero escribe los json y las figuras de `final/` y tarda unos cuatro minuto
 entrega de avance y de `semilla/`. En una copia limpia del repositorio, los dos reproducen byte a byte los
 archivos versionados (medido el 24 de noviembre de 2026). También escriben las cifras del informe y los archivos del
 reporte y del video de avance, en `final/informe/`, `avance/reporte/` y `avance/video/`, carpetas que no están
-en el repositorio.
+en el repositorio, como tampoco `docs/`, las notas de trabajo que cita el informe.
 
 ## Referencias
 
