@@ -2,6 +2,7 @@
 
 <h2 align="center"><a href="https://rocas03.github.io/fractura-control-optimo/poster-vivo/">▶ Abre el póster vivo</a></h2>
 <p align="center"><b><a href="https://rocas03.github.io/fractura-control-optimo/poster-vivo/">Toca aquí</a></b>: cambia los parámetros del problema y mira cómo se recalculan en el celular la dinámica, el control LQ, Pontryagin y Hamilton–Jacobi–Bellman.</p>
+<p align="center"><a href="entrega/hoja-formulacion.pdf"><b>Hoja de formulación</b></a> · <a href="entrega/poster-MA4703-Castellanos-Ibarra.pdf"><b>Póster</b></a> · <a href="entrega/informe-final.pdf"><b>Informe final</b></a></p>
 
 ---
 
@@ -13,6 +14,9 @@ Cristóbal Castellanos y Esteban Ibarra.
 ## Si llegaste por el QR del póster
 
 - [Póster](entrega/poster-MA4703-Castellanos-Ibarra.pdf), en la versión A0 entregada.
+- [Hoja de formulación](entrega/hoja-formulacion.pdf), la que se entrega en la presentación: en una página el
+  modelo KGD (estados, control, parámetros, dinámica y problema, con su dibujo) y en la otra el modelo
+  phase-field AT2.
 - [Informe final](entrega/informe-final.pdf), 15 páginas: el modelo, las demostraciones, todas las cifras y lo
   que queda abierto.
 - [Notebook del avance](notebook/fractura.ipynb), que GitHub muestra con sus salidas y figuras. Es el de la entrega de
@@ -66,7 +70,7 @@ minimizador. El modelo es reducido: entre él y el modelo phase-field hay una an
 
 ## Dónde está cada cosa
 
-- `entrega/`: el póster y el informe final, en PDF.
+- `entrega/`: el póster, la hoja de formulación de los dos modelos y el informe final, en PDF.
 - `poster-vivo/`: el póster vivo, un solo `index.html` con su propio motor en JavaScript; parte del caso base
   del informe (§2.4) y está contrastado con los resultados de `julia/`.
 - `julia/`: todo el cómputo, como paquete de Julia `Fractura`. Su [README](julia/README.md) dice qué
