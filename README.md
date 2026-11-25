@@ -67,6 +67,8 @@ minimizador. El modelo es reducido: entre él y el modelo phase-field hay una an
 ## Dónde está cada cosa
 
 - `entrega/`: el póster y el informe final, en PDF.
+- `poster-vivo/`: el póster vivo, un solo `index.html` con su propio motor en JavaScript; parte del caso base
+  del informe (§2.4) y está contrastado con los resultados de `julia/`.
 - `julia/`: todo el cómputo, como paquete de Julia `Fractura`. Su [README](julia/README.md) dice qué
   archivo hace qué.
 - `notebook/`: el notebook de la entrega de avance (26 de octubre), autocontenido; calcula los objetivos 1, 3
