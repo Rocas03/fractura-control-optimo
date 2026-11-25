@@ -1,7 +1,7 @@
 # Control óptimo de la tasa de inyección en un modelo reducido de fractura hidráulica
 
 <h2 align="center"><a href="https://rocas03.github.io/fractura-control-optimo/poster-vivo/">▶ Abre el póster vivo</a></h2>
-<p align="center"><b><a href="https://rocas03.github.io/fractura-control-optimo/poster-vivo/">Toca aquí</a></b>: cambia el problema y mira cómo se recalculan en el celular los bloques de Dinámica, Control LQ y Pontryagin.</p>
+<p align="center"><b><a href="https://rocas03.github.io/fractura-control-optimo/poster-vivo/">Toca aquí</a></b>: cambia los parámetros del problema y mira cómo se recalculan en el celular la dinámica, el control LQ, Pontryagin y Hamilton–Jacobi–Bellman.</p>
 
 ---
 
@@ -17,7 +17,7 @@ Cristóbal Castellanos y Esteban Ibarra.
   que queda abierto.
 - [Notebook del avance](notebook/fractura.ipynb), que GitHub muestra con sus salidas y figuras. Es el de la entrega de
   avance (objetivos 1, 3 y 4, 280 pruebas); las 720 pruebas y el resto de los objetivos están en `julia/`.
-- [Póster vivo](poster-vivo/index.html): la página interactiva, un solo HTML que calcula en el navegador.
+- [Póster vivo](https://rocas03.github.io/fractura-control-optimo/poster-vivo/): la página interactiva, un solo HTML que calcula en el navegador (su fuente está en `poster-vivo/index.html`).
 - [Código](julia/): el paquete de Julia que calcula cada número del póster y del informe.
 
 ## El problema

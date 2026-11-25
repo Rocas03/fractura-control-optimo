@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="build" content="3d0f2a9eebe2">
+<meta name="build" content="4dd8cdfb9fe5">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
@@ -264,13 +264,22 @@ sup{font-size:.75em;line-height:0}
 #lq-l0{aspect-ratio:7/5}
 /* css-pm */
 .pm-ley{display:flex;flex-wrap:wrap;gap:0 14px;margin:8px 0 4px;font-size:12px;line-height:1.2}
-.pm-ley .pm-le{display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:0 2px;border:0;background:none;color:var(--tinta);font:inherit;text-align:left}
+.pm-ley .pm-le{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 2px;border:0;background:none;color:var(--tinta);font:inherit;text-align:left}
 .pm-ley button.pm-le{cursor:pointer}
 .pm-ley .pm-le.off{color:#9a9a94}
 .pm-ley .pm-le.off .muestra{opacity:.3}
 .pm-ley .pm-le.sel{font-weight:700;text-decoration:underline}
 .pm-ley .pm-mas{color:#8a8a84}
 .pm-quitar{margin:6px 0}
+/* css-hj */
+#hj-ed{position:sticky;bottom:calc(env(safe-area-inset-bottom,0px) + 6px);z-index:6;box-shadow:0 -4px 14px rgba(0,0,0,.12)}
+.hj-ctl{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:12.5px;color:var(--tinta2)}
+.hj-g{display:inline-flex;align-items:center;gap:6px}
+.apil .lienzo.hj-mapa{aspect-ratio:5/4}
+.hj-tau{display:flex;align-items:center;gap:10px;margin-top:4px;font-size:12.5px}
+.hj-tau label{flex:none;min-width:104px}
+.hj-tau b{font-variant-numeric:tabular-nums}
+.hj-tau input[type=range]{flex:1;min-width:0;height:44px;margin:0;accent-color:var(--acento)}
 /* portada: título, modelo, dibujo y formulación en un mismo recuadro */
 .portada{background:var(--papel);border:1px solid var(--linea);border-radius:14px;padding:10px 12px;margin:0 0 12px}
 .portada h1{text-align:center;margin:0 0 2px}
@@ -320,8 +329,9 @@ sup{font-size:.75em;line-height:0}
   <h2 class="sec-t" id="t-din">Dinámica</h2>
   <p class="sec-s">La grieta sin control óptimo: sin inyectar y con caudal constante.</p>
   <div id="slots"></div>
-  <section id="sec-lq" aria-labelledby="t-lq"><h2 class="sec-t" id="t-lq">Control LQ</h2><p class="sec-s">Con un error en los datos, ¿cuánto se aleja ℓ(T) de la nominal?</p></section>
+  <section id="sec-lq" aria-labelledby="t-lq"><h2 class="sec-t" id="t-lq">Control LQ</h2><p class="sec-s">Con un error en los datos, ¿cuánto se aleja ℓ(T) de la extremal?</p></section>
   <section id="sec-pm" aria-labelledby="t-pm"><h2 class="sec-t" id="t-pm">Pontryagin</h2><p class="sec-s">El extremal contra otros caudales: cuánto sube el costo J.</p></section>
+  <section id="sec-hj" aria-labelledby="t-hj"><h2 class="sec-t" id="t-hj">Hamilton–Jacobi–Bellman</h2><p class="sec-s">El feedback de V contra empujones: cuánto sube el costo J.</p></section>
   <footer class="pie-proy">Cristóbal Castellanos · Esteban Ibarra · MA4703 Control Óptimo · FCFM, Universidad de Chile · primavera 2026<br>Parámetros sintéticos y adimensionales, sin calibrar con datos reales · <a href="https://github.com/Rocas03/fractura-control-optimo" target="_blank" rel="noopener">código</a></footer>
 </main>
 
@@ -1456,7 +1466,7 @@ sup{font-size:.75em;line-height:0}
   function lq(p, opt, casos) {
     const t0 = ahora(), T = p.T, qmax = p.qmax;
     const vacio = (msg) => ({ nominal: null, ellTbar: NaN, PTbar: NaN, ms: ahora() - t0, casos: (casos || []).map((c) => ({ k: c.k, pct: c.pct, error: msg })) });
-    if (!opt || !opt.ok || !opt.U || !opt.t) return vacio('no hay óptimo nominal');
+    if (!opt || !opt.ok || !opt.U || !opt.t) return vacio('no hay extremal');
     const n = opt.t.length, U = opt.U;
     // la nominal es el control del óptimo interpolado entre sus muestras, integrado sobre la planta nominal
     const ubar = (t) => {
@@ -1473,7 +1483,7 @@ sup{font-size:.75em;line-height:0}
       d[0] = o[0];
       d[1] = o[1];
     }, [p.ell0, p.P0], 0, T, 1e-10, 1e-12, T / 100, 50000, stNom.hook);
-    if (!rn.ok) return vacio('la nominal no se pudo integrar');
+    if (!rn.ok) return vacio('el extremal no se pudo integrar');
     const ts = new Float64Array(n);
     for (let i = 0; i < n; i++) ts[i] = (i * T) / (n - 1);
     ts[n - 1] = T;
@@ -1545,7 +1555,147 @@ sup{font-size:.75em;line-height:0}
     return { nominal, ellTbar, PTbar, ms: ahora() - t0, casos: salida };
   }
 
-  const Motor = { base, RANGOS, simular, ellInf, pCritico, tAsentar, uCritico, optimo, costo, comparaciones, lq };
+  // ---------- HJB: semi-Lagrangiano hacia atrás en la malla (ℓ, P), como hjb.jl ----------
+  // fuera de la malla, ℓ se extrapola y P se recorta
+  function hjbMalla(p, o) {
+    const n = o.n || 41, nt = o.nt || 20, nu = o.nu || 21;
+    const t0 = ahora();
+    const { campo } = modelo(p);
+    const Pref = p.Pref || 0;
+    const l0 = p.ell0, l1 = o.l1 || Math.max(1.5 * p.Ld, l0 + 0.5), P1 = o.P1 || Math.max(1.2, 2 * p.P0);
+    const hl = (l1 - l0) / (n - 1), hP = P1 / (n - 1), dt = p.T / nt, N = n * n;
+    const us = new Float64Array(nu);
+    for (let a = 0; a < nu; a++) us[a] = (p.qmax * a) / Math.max(1, nu - 1);
+    const L = (P, u) => (p.wp * (P - Pref) * (P - Pref) + p.wq * u * u) / 2;
+    const d = new Float64Array(2);
+    // un paso de punto medio desde (l, P) con u fijo: deja el pie y el costo corriente en `pie`
+    const pie = new Float64Array(3);
+    const paso = (l, P, u, h) => {
+      campo(l, P, u, d);
+      const lm = l + (h / 2) * d[0], Pm = P + (h / 2) * d[1];
+      campo(lm, Pm, u, d);
+      pie[0] = l + h * d[0];
+      pie[1] = P + h * d[1];
+      pie[2] = (h / 2) * (L(P, u) + L(pie[1], u));
+    };
+    // V interpolada bilineal en el pie
+    const interp = (V, l, P) => {
+      const s = (l - l0) / hl, r = clamp(P, 0, P1) / hP;
+      const i = clamp(Math.floor(s), 0, n - 2), j = clamp(Math.floor(r), 0, n - 2);
+      const a = s - i, b = r - j, q = i + n * j;
+      return (1 - a) * (1 - b) * V[q] + a * (1 - b) * V[q + 1] + (1 - a) * b * V[q + n] + a * b * V[q + n + 1];
+    };
+    // la dinámica no depende de τ: el pie de cada (nodo, control) se tabula una vez
+    const tq = new Int32Array(N * nu), ta = new Float64Array(N * nu), tb = new Float64Array(N * nu), tc = new Float64Array(N * nu);
+    for (let j = 0, m = 0; j < n; j++)
+      for (let i = 0; i < n; i++)
+        for (let a = 0; a < nu; a++, m++) {
+          paso(l0 + i * hl, j * hP, us[a], dt);
+          const s = (pie[0] - l0) / hl, r = clamp(pie[1], 0, P1) / hP;
+          const ii = clamp(Math.floor(s), 0, n - 2), jj = clamp(Math.floor(r), 0, n - 2);
+          tq[m] = ii + n * jj; ta[m] = s - ii; tb[m] = r - jj; tc[m] = pie[2];
+        }
+    const V = new Array(nt + 1), pol = new Array(nt);
+    const VT = new Float64Array(N);
+    for (let j = 0; j < n; j++)
+      for (let i = 0; i < n; i++) { const dl = l0 + i * hl - p.Ld; VT[i + n * j] = (p.wT * dl * dl) / 2; }
+    V[nt] = VT;
+    const qs = new Float64Array(nu);
+    // vértice de la parábola por el mínimo discreto y sus vecinos: afina u sin tocar V
+    const afinar = (a) => {
+      if (a === 0 || a === nu - 1) return us[a];
+      const den = qs[a - 1] - 2 * qs[a] + qs[a + 1];
+      return den > 1e-14 ? us[a] - ((us[1] - us[0]) * (qs[a + 1] - qs[a - 1])) / (2 * den) : us[a];
+    };
+    for (let k = nt - 1; k >= 0; k--) {
+      const Vs = V[k + 1], Vk = new Float64Array(N), Pk = new Float32Array(N);
+      for (let x = 0, m = 0; x < N; x++) {
+        let mejor = Infinity, am = 0;
+        for (let a = 0; a < nu; a++, m++) {
+          const q = tq[m], sa = ta[m], sb = tb[m];
+          const v = tc[m] + (1 - sa) * (1 - sb) * Vs[q] + sa * (1 - sb) * Vs[q + 1] + (1 - sa) * sb * Vs[q + n] + sa * sb * Vs[q + n + 1];
+          qs[a] = v;
+          if (v < mejor) { mejor = v; am = a; }
+        }
+        Vk[x] = mejor;
+        Pk[x] = afinar(am);
+      }
+      V[k] = Vk; pol[k] = Pk;
+    }
+    const valor = (k, l, P) => interp(V[clamp(k, 0, nt)], l, P);
+    // la ley en τ ∈ [0, T): se propaga lo que falta hasta el nodo de tiempo siguiente
+    const ley = (tau, l, P) => {
+      const k = Math.min(Math.max(0, Math.floor(tau / dt + 1e-9)), nt - 1);
+      const del = (k + 1) * dt - tau, Vs = V[k + 1];
+      let mejor = Infinity, am = 0;
+      for (let a = 0; a < nu; a++) {
+        paso(l, P, us[a], del);
+        const v = pie[2] + interp(Vs, pie[0], pie[1]);
+        qs[a] = v;
+        if (v < mejor) { mejor = v; am = a; }
+      }
+      return afinar(am);
+    };
+    const sol = { ok: true, n, nt, nu, dt, l0, l1, P1, hl, hP, V, pol, valor, ley };
+    sol.V0 = valor(0, p.ell0, p.P0);
+    sol.u0 = ley(0, p.ell0, p.P0);
+    sol.ms = ahora() - t0;
+    return sol;
+  }
+  // si el lazo cerrado se sale de la malla o toca el techo de P, se resuelve de nuevo en un dominio más grande
+  function hjb(p, o) {
+    o = Object.assign({}, o);
+    let sol = hjbMalla(p, o), ms = sol.ms;
+    for (let i = 0; i < 2; i++) {
+      const lc = lazo(p, sol);
+      if (!lc.ok) break;
+      let ml = 0, mP = 0;
+      for (let j = 0; j < lc.t.length; j++) { if (lc.ell[j] > ml) ml = lc.ell[j]; if (lc.P[j] > mP) mP = lc.P[j]; }
+      if (ml <= 0.95 * sol.l1 && mP <= 0.9 * sol.P1) break;
+      o.l1 = ml > 0.95 * sol.l1 ? sol.l0 + 1.3 * (ml - sol.l0) : sol.l1;
+      o.P1 = mP > 0.9 * sol.P1 ? 1.6 * mP : sol.P1;
+      sol = hjbMalla(p, o);
+      ms += sol.ms;
+    }
+    sol.ms = ms;
+    return sol;
+  }
+
+  // Lazo sobre la planta `planta` (por defecto la nominal), con el costo de p.
+  // ley: solución de hjb (feedback) o { t, U } de lazo abierto; golpe: salto de P en τ = golpe.tau
+  function lazo(p, ley, o) {
+    o = o || {};
+    const pl = o.planta || p, N = o.N || 200, h = p.T / N, Pref = p.Pref || 0;
+    const { campo } = modelo(pl);
+    const abierto = !ley.ley;
+    const uAb = (tau) => {
+      const t = ley.t, U = ley.U, m = t.length;
+      const s = clamp((tau / t[m - 1]) * (m - 1), 0, m - 1), i = Math.min(Math.floor(s), m - 2);
+      return U[i] + (s - i) * (U[i + 1] - U[i]);
+    };
+    const mg = o.golpe ? clamp(Math.round(o.golpe.tau / h), 1, N - 1) : -1;
+    const t = new Float64Array(N + 1), U = new Float64Array(N + 1), ell = new Float64Array(N + 1), P = new Float64Array(N + 1);
+    const y = [pl.ell0, pl.P0, 0], k1 = [0, 0, 0], k2 = [0, 0, 0], k3 = [0, 0, 0], k4 = [0, 0, 0], d = new Float64Array(2);
+    let u = 0;
+    const F = (a, b, out) => { campo(a, b, u, d); out[0] = d[0]; out[1] = d[1]; out[2] = (p.wp * (b - Pref) * (b - Pref) + p.wq * u * u) / 2; };
+    for (let m = 0; m < N; m++) {
+      if (m === mg) y[1] = Math.max(0, y[1] + o.golpe.dP);
+      const tau = m * h;
+      u = abierto ? clamp(uAb(tau + h / 2), 0, p.qmax) : ley.ley(tau, y[0], y[1]);
+      t[m] = tau; U[m] = u; ell[m] = y[0]; P[m] = y[1];
+      F(y[0], y[1], k1);
+      F(y[0] + (h / 2) * k1[0], y[1] + (h / 2) * k1[1], k2);
+      F(y[0] + (h / 2) * k2[0], y[1] + (h / 2) * k2[1], k3);
+      F(y[0] + h * k3[0], y[1] + h * k3[1], k4);
+      for (let i = 0; i < 3; i++) y[i] += (h / 6) * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]);
+      if (!Number.isFinite(y[0] + y[1])) return { ok: false };
+    }
+    t[N] = p.T; U[N] = u; ell[N] = y[0]; P[N] = y[1];
+    const dl = y[0] - p.Ld;
+    return { ok: true, t, U, ell, P, J: (p.wT * dl * dl) / 2 + y[2], ellT: y[0], PT: y[1] };
+  }
+
+  const Motor = { base, RANGOS, simular, ellInf, pCritico, tAsentar, uCritico, optimo, costo, comparaciones, lq, hjb, lazo };
   globalThis.Motor = Motor;
   if (typeof module !== 'undefined' && module.exports) module.exports = Motor;
 })();
@@ -1653,10 +1803,11 @@ function defLQ() {
   const cols = [{ id: nextId++, k: 'P0', pct: 20 }];
   return { cols, sel: cols[0].id, edit: false };
 }
-function defPM() { return { fl: [true, true, true, true], ex: [], edit: null }; }
+function defPM() { return { fl: [true, true, true, true, true], ex: [], edit: null }; }
+function defHJ() { return { n: 81, nt: 20, mapa: 'u', tau: 0, fl: true, ex: [], edit: null }; }
 function estadoInicial() {
   const mk = (vs) => vs.map((v, i) => ({ id: nextId++, v, e: i }));
-  return { p: M.base(), ch: [mk([0.15, 0.6, 1]), mk([0.6, 1.2, 2])], ax: 0, ot: [false, false], lq: defLQ(), pm: defPM() };
+  return { p: M.base(), ch: [mk([0.15, 0.6, 1]), mk([0.6, 1.2, 2])], ax: 0, ot: [false, false], lq: defLQ(), pm: defPM(), hj: defHJ() };
 }
 const S = Object.assign(estadoInicial(), {
   hoja: 0, full: -1, edit: null, opt: null, uc: null, arr: false, sucio: true, raf: 0,
@@ -1681,7 +1832,10 @@ function codificar(E) {
   const is = E.lq.cols.findIndex(c => c.id === E.lq.sel);
   t.push('ls' + Math.max(0, is));
   t.push('pm' + E.pm.ex.map(c => c.t + 's' + c.e + 'v' + nTxt(c.v)).join('z'));
-  t.push('pf' + E.pm.fl.reduce((a, b, i) => a | (b ? 1 << i : 0), 0).toString(16));
+  // siempre dos dígitos: uno solo se lee como hash viejo y prende q_max = 0,8
+  t.push('pf' + E.pm.fl.reduce((a, b, i) => a | (b ? 1 << i : 0), 0).toString(16).padStart(2, '0'));
+  t.push('hj' + 'n' + E.hj.n + 'k' + E.hj.nt + 'm' + (E.hj.mapa === 'V' ? 1 : 0) + 't' + E.hj.tau + 'f' + (E.hj.fl ? 1 : 0));
+  t.push('hx' + E.hj.ex.map(c => c.t + 's' + c.e + 'v' + nTxt(c.v)).join('z'));
   return t.join('-');
 }
 function decodificar(h) {
@@ -1692,10 +1846,10 @@ function decodificar(h) {
   let lsel = null, pflags = null, pex = null;
   for (const tok of h.split('-')) {
     let hecho = false;
-    for (const key of KEYS.concat(['xp', 'xu', 'ax', 'ot', 'lq', 'ls', 'pm', 'pf'])) {
+    for (const key of KEYS.concat(['xp', 'xu', 'ax', 'ot', 'lq', 'ls', 'pm', 'pf', 'hj', 'hx'])) {
       if (!tok.startsWith(key)) continue;
       const resto = tok.slice(key.length);
-      const nuevo = key === 'lq' || key === 'ls' || key === 'pm' || key === 'pf';
+      const nuevo = key === 'lq' || key === 'ls' || key === 'pm' || key === 'pf' || key === 'hj' || key === 'hx';
       if (vistos[key]) { if (nuevo) { hecho = true; break; } return null; }
       vistos[key] = 1;
       if (key === 'xp' || key === 'xu') {
@@ -1739,8 +1893,24 @@ function decodificar(h) {
           }
         }
         if (!malo && items.length <= MAXPM && new Set(items.map(x => x.e)).size === items.length) pex = items;
+      } else if (key === 'hj') {
+        const m = /^n(41|81|161)k(10|20|40)m([01])t(\d{1,3})f([01])$/.exec(resto);
+        if (m && +m[4] <= 100) listas.hj = { n: +m[1], nt: +m[2], mapa: m[3] === '1' ? 'V' : 'u', tau: +m[4], fl: m[5] === '1' };
+      } else if (key === 'hx') {
+        const items = [];
+        let malo = false;
+        if (resto !== '') {
+          for (const it of resto.split('z')) {
+            const m = /^([ge])s([0-2])v(m?\d+(?:p\d+)?)$/.exec(it);
+            const v = m ? nVal(m[3]) : NaN, g = m && m[1] === 'g' ? HJ_G : HJ_E;
+            if (!m || !isFinite(v) || v < g.min - 1e-9 || v > g.max + 1e-9) { malo = true; break; }
+            items.push({ t: m[1], e: +m[2], v });
+          }
+        }
+        if (!malo && items.length <= MAXHJ && new Set(items.map(x => x.e)).size === items.length) listas.hx = items;
       } else if (key === 'pf') {
-        if (/^[0-9a-f]$/.test(resto)) pflags = parseInt(resto, 16);
+        // hash viejo (un dígito) no traía la curva q_max = 0,8: queda encendida
+        if (/^[0-9a-f]{1,2}$/.test(resto)) pflags = parseInt(resto, 16) | (resto.length === 1 ? 16 : 0);
       } else {
         if (!RE_N.test(resto)) return null;
         const q = PARAMS.find(x => x.h === key);
@@ -1781,7 +1951,9 @@ function decodificar(h) {
   }
   e.pm = defPM();
   if (pex) e.pm.ex = pex.filter(x => x.t === 'u').map(x => ({ id: nextId++, t: x.t, e: x.e, v: x.v }));
-  if (pflags !== null) e.pm.fl = [0, 1, 2, 3].map(i => !!(pflags & (1 << i)));
+  if (pflags !== null) e.pm.fl = [0, 1, 2, 3, 4].map(i => !!(pflags & (1 << i)));
+  e.hj = Object.assign(defHJ(), listas.hj || {});
+  if (listas.hx) e.hj.ex = listas.hx.map(x => ({ id: nextId++, t: x.t, e: x.e, v: x.v }));
   return e;
 }
 function escribirHash() {
@@ -1875,10 +2047,10 @@ let D = [{ series: [], tmax: 1 }, { series: [], tmax: 1 }];
 function ultimo(a) { return a[a.length - 1]; }
 
 // el óptimo de unos parámetros, con memoria; lo usan Dinámica, LQ y Pontryagin
-// cómo se calculó el extremal que usan LQ (como nominal) y Pontryagin
+// cómo se calculó el extremal: va entre paréntesis en cada leyenda que lo muestra
 function comoOpt(o) {
   if (!o || !o.ok) return '';
-  return o.metodo === 'disparo' ? 'extremal de Pontryagin, por disparo' : 'solución por método directo';
+  return o.metodo === 'disparo' ? 'Pontryagin, por disparo' : 'método directo';
 }
 function hallarOpt(p) {
   return memoizar('o' + kt(p), () => {
@@ -1900,10 +2072,14 @@ function calcular(ahora) {
     let tm = 1;
     for (const it of lista) {
       const t = memoizar('t' + kd(p) + '|' + it.v, () => M.tAsentar(p, it.v, 0.99));
-      it.t99 = (t !== null && t !== undefined && isFinite(t)) ? t : 30;
+      it.corta = !(t !== null && t !== undefined && isFinite(t));
+      it.t99 = it.corta ? 30 : t;
       tm = Math.max(tm, it.t99);
     }
     tm = Math.min(400, tm * 1.05 + 0.05);
+    // la curva se corta antes del 99 % de ℓ∞: se avisa en vez de dejar el punto lejos de su ℓ∞
+    const cortas = lista.filter(it => it.corta || it.t99 > tm).map(it => it.label);
+    if (cortas.length) S.avisos[0].push((cortas.length > 1 ? 'Se cortan' : 'Se corta') + ' en τ = ' + f(tm, 0) + ', antes de llegar a ℓ∞: ' + cortas.join(', ') + '.');
     const series = [];
     for (const it of lista) {
       const s = memoizar('a' + kd(p) + '|' + it.v + '|' + tm, () => M.simular(Object.assign({}, p, { P0: it.v }), 0, tm, { N: 700 }));
@@ -1975,7 +2151,7 @@ function cajaAjuste(series, o) {
   if (dx < 1e-9) { dx = 1; x1 = x0 + 1; }
   if (dy < 1e-9) { dy = 1; y1 = y0 + 1; }
   if (o.x0cero) x1 += 0.03 * dx; else { x0 -= 0.05 * dx; x1 += 0.05 * dx; }
-  if (o.y0cero) { y0 -= 0.04 * dy; y1 += 0.06 * dy; } else { y0 -= 0.06 * dy; y1 += 0.06 * dy; }
+  if (o.y0cero) { y0 -= 0.04 * dy; y1 += 0.12 * dy; } else { y0 -= 0.06 * dy; y1 += 0.06 * dy; }
   return { x0, x1, y0, y1 };
 }
 const OPC_EJE = [
@@ -2170,7 +2346,19 @@ function pintar(cv, o) {
   // etiquetas de referencias
   ctx.fillStyle = '#52514e';
   ctx.textBaseline = 'alphabetic';
-  for (const r of (o.vl || [])) { if (r.eje || !r.txt) continue; const x = X(r.x); if (x > ml && x < W - mr) { ctx.textAlign = 'left'; ctx.fillText(r.txt, Math.min(x + 3, W - mr - 24), mt + 11); } }
+  // halo blanco para que ninguna recta tache el rótulo
+  for (const r of (o.vl || [])) {
+    if (r.eje || !r.txt) continue;
+    const x = X(r.x);
+    if (x > ml && x < W - mr) {
+      ctx.textAlign = 'left';
+      // si una recta horizontal (q_max, ℓd…) pasa por arriba, el rótulo baja
+      const tapa = (o.hl || []).some(h => Math.abs(Y(h.y) - (mt + 7)) < 9);
+      const xt = Math.min(x + 3, W - mr - ctx.measureText(r.txt).width - 2), yt = mt + (tapa ? 25 : 11);
+      ctx.save(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3.5; ctx.lineJoin = 'round'; ctx.strokeText(r.txt, xt, yt); ctx.restore();
+      ctx.fillText(r.txt, xt, yt);
+    }
+  }
   for (const r of (o.hl || [])) { if (r.eje || !r.txt) continue; const y = Y(r.y); if (y > mt && y < H - mb) { ctx.textAlign = 'right'; ctx.fillText(r.txt, W - mr - 3, y - 4); } }
   // ejes
   ctx.strokeStyle = '#6b6a66';
@@ -2337,7 +2525,7 @@ function actualizarChips() {
   }
   const o = S.opt;
   for (const k of [0, 1]) if (S.ot[k]) {
-    poner('chip-' + k + '-opt-val', o && o.ok ? 'extremal' : o ? 'extremal: no convergió' : 'extremal: calculando…');
+    poner('chip-' + k + '-opt-val', o && o.ok ? 'extremal (' + comoOpt(o) + ')' : o ? 'extremal: no convergió' : 'extremal: calculando…');
   }
 }
 
@@ -2800,6 +2988,7 @@ document.addEventListener('keydown', e => {
   else if (S.fsel) cerrarFed();
   else if (S.lq.edit) { S.lq.edit = false; sincronizarEdLQ(); pedir(); }
   else if (S.pm.edit) { S.pm.edit = null; cambioPM(); }
+  else if (S.hj.edit) { S.hj.edit = null; cambioHJ(); }
   else if (S.hoja) cerrarHoja();
 });
 
@@ -3126,13 +3315,13 @@ function anotacionLQ(r, cv) {
   const sci = x => { const e = Math.floor(Math.log10(x)); return f(x / 10 ** e, 1) + '·10' + String(e).replace(/./g, ch => SUP[ch]); };
   const pc = o => { const a = Math.abs(o.dEllRel) * 100; return a > 0 && a < 1e-3 ? sci(a) + ' %' : pctSig(a); };
   const num = x => x >= 1000 ? sci(x) : ffac(x).slice(1);
-  const veces = x => !isFinite(x) ? '(—)' : x >= 1 ? '(' + num(x) + ' veces mejor que lazo abierto)' : '(' + num(1 / x) + ' veces peor que lazo abierto)';
+  const veces = x => !isFinite(x) ? '(—)' : Math.abs(x - 1) < 0.005 ? '(igual que lazo abierto)' : x >= 1 ? '(' + num(x) + ' veces mejor que lazo abierto)' : '(' + num(1 / x) + ' veces peor que lazo abierto)';
   const sinError = Math.abs(r.la.dEllRel) * 100 < 1e-3;
-  const ent = [['desviación de ℓ(T) respecto de la nominal', '#1b1b1a']].concat(sinError
+  const ent = [['desviación de ℓ(T) respecto del extremal', '#1b1b1a']].concat(sinError
     ? [['lazo abierto: ≈ 0\u00a0%', '#C25A00'], ['LQ: ≈ 0\u00a0% (sin error de parámetro)', ESTILOS[0].color]]
     : [['lazo abierto: ' + pc(r.la), '#C25A00'], ['LQ: ' + pc(r.lq), ESTILOS[0].color, veces(r.factorLQ)]]);
   // la energía mínima conoce el error y llega a la nominal por construcción: su «veces mejor» es ruido numérico
-  if (r.em) ent.push(Math.abs(r.em.dEllRel) * 100 < 1e-3 ? ['energía mínima: ≈ 0\u00a0%', '#1E7A1E', '(conoce el error de antemano)'] : ['energía mínima: ' + pc(r.em), '#1E7A1E', veces(r.factorEM)]);
+  if (r.em) ent.push(Math.abs(r.em.dEllRel) * 100 < 1e-3 ? ['energía mínima: ≈ 0\u00a0%', '#1E7A1E'] : ['energía mínima' + (r.em.recortado ? ', recortada a qₘₐₓ' : '') + ': ' + pc(r.em), '#1E7A1E', veces(r.factorEM)]);
   // si la línea no cabe en el ancho del gráfico, el paréntesis baja a la línea siguiente
   const ctx = cv.getContext('2d');
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -3176,7 +3365,8 @@ function conmTaus(o) {
 // ---------- LQ y Pontryagin: construcción ----------
 const SECS = {
   lq: { vis: false, firma: null, ult: 0, costo: 20 },
-  pm: { vis: false, firma: null, ult: 0, costo: 20 }
+  pm: { vis: false, firma: null, ult: 0, costo: 20 },
+  hj: { vis: false, firma: null, ult: 0, costo: 20 }
 };
 const lqCv = [], lqCaja = [], pmCv = [], pmCaja = [];
 const TIT_APIL = ['Caudal U', 'Largo ℓ', 'Presión P'];
@@ -3215,6 +3405,7 @@ const ED_LQ_NOMBRE = { ell0: 'semilargo inicial', P0: 'presión inicial', n: 'ex
   $('#sec-pm').insertAdjacentHTML('beforeend',
     '<div class="panel apil">' +
     '<div class="aviso" id="pm-aviso" hidden></div>' + lienzosHTML('pm') +
+    '<div class="lienzo" id="pm-l3"><canvas id="pm-cv3" role="img" aria-label="Presión P contra semilargo ℓ"></canvas></div>' +
     '<div class="pm-ley" id="pm-leyenda" role="group" aria-label="Leyenda: toca una curva para mostrarla u ocultarla"></div>' +
     editorHTML('pm', '<button class="btn pm-quitar" id="pm-ed-quitar">Quitar curva</button>') +
     '<dl class="stats" id="pm-stats">' +
@@ -3248,6 +3439,9 @@ const ED_LQ_NOMBRE = { ell0: 'semilargo inicial', P0: 'presión inicial', n: 'ex
     arrastre(cv); gestos(cv);
   };
   for (let i = 0; i < 3; i++) { boton(lqCaja[i], lqCv[i], TIT_LQ[i]); boton(pmCaja[i], pmCv[i], TIT_PM[i]); }
+  // plano de fase presión–largo, como en Dinámica
+  pmCv[3] = $('#pm-cv3'); pmCaja[3] = $('#pm-l3');
+  boton(pmCaja[3], pmCv[3], 'Pontryagin · presión P – semilargo ℓ');
   MINIS.forEach(m => boton(m.caja, m.cv, 'Solución extremal · ' + m.tit));
 })();
 
@@ -3284,6 +3478,7 @@ function sincronizarEdLQ() {
   if (document.activeElement !== num) num.value = fc(c.pct).replace(MENOS, '-');
 }
 function cambioLQ() {
+  if (snap) { snap = null; etiquetaVolver(); }
   renderLQ();
   S.hashPend = true;
   pedir();
@@ -3292,6 +3487,7 @@ function fijarPct(v, fin) {
   const c = selLQ();
   if (!c || !isFinite(v)) return;
   c.pct = +clamp(v, PCT_MIN, PCT_MAX).toFixed(2);
+  if (snap) { snap = null; etiquetaVolver(); }
   poner('lq-pct', fc(Math.abs(c.pct)) + ' %');
   poner('lq-dir', c.pct < 0 ? 'menor' : 'mayor');
   sincronizarEdLQ();
@@ -3345,7 +3541,7 @@ function calcularLQ() {
   LQ.err = null;
   if (typeof M.lq !== 'function') { LQ.err = 'Falta Motor.lq: el motor todavía no trae el control LQ.'; return; }
   const opt = hallarOpt(p);
-  if (!opt || !opt.ok) { LQ.err = 'El extremal no convergió' + (opt && opt.aviso ? ' (' + opt.aviso + ')' : '') + ': sin nominal no hay LQ.'; return; }
+  if (!opt || !opt.ok) { LQ.err = 'El extremal no convergió' + (opt && opt.aviso ? ' (' + opt.aviso + ')' : '') + ': sin extremal no hay LQ.'; return; }
   const pedidos = [];
   for (const c of S.lq.cols) {
     const clave = c.k + '|' + c.pct;
@@ -3355,7 +3551,7 @@ function calcularLQ() {
   const r = M.lq(p, opt, pedidos);
   if (!r || !r.nominal) {
     const e0 = r && r.casos && r.casos.find(q => q.error);
-    LQ.err = 'El LQ no tiene nominal' + (e0 ? ': ' + e0.error : '') + '.';
+    LQ.err = 'El LQ no tiene extremal' + (e0 ? ': ' + e0.error : '') + '.';
     return;
   }
   LQ.base = { nominal: r.nominal, ellTbar: r.ellTbar, PTbar: r.PTbar, ms: r.ms };
@@ -3363,7 +3559,7 @@ function calcularLQ() {
 }
 function leyendaLQ() {
   const como = comoOpt(hallarOpt(Object.assign({}, S.p)));
-  const ent = [['nominal' + (como ? ' (' + como + ')' : ''), NEGRO], ['lazo abierto', ESTILOS[1]], ['LQ de seguimiento', ESTILOS[0]], ['energía mínima', ESTILOS[2]]];
+  const ent = [['extremal' + (como ? ' (' + como + ')' : ''), NEGRO], ['lazo abierto', ESTILOS[1]], ['LQ de seguimiento', ESTILOS[0]], ['energía mínima', ESTILOS[2]]];
   const h = ent.map(e => leyPMHTML(e[1], e[0], null)).join('');
   const L = $('#lq-leyenda');
   if (L._h !== h) { L._h = h; L.innerHTML = h; }
@@ -3443,15 +3639,18 @@ const PM_FIJOS = [
   { id: 'v', est: ESTILOS[1], nom: 'igual volumen que el extremal' },
   { id: 'r', est: ESTILOS[2], nom: 'mejor rampa' }
 ];
+// curva fija con el caudal topado en 0,8: muestra la conmutación (solo si el q_max del problema es mayor)
+const Q_COTA = 0.8;
+const PM_Q = { color: '#006D5B', dash: [8, 3], w: 2.4, cap: 'butt' };
 // un solo óptimo: el del problema de la pestaña Formulación. Lo demás son otros controles para comparar
 const PM = { firma: null, pk: null, opt: null, cero: null, ceroJ: null, cmp: null, cmpErr: null, q08: null, ex: new Map(), err: null };
-function etqPM(c) { return c.t === 'u' ? 'U=' + fc(c.v) : 'qmax=' + fc(c.v); }
+function etqPM(c) { return c.t === 'u' ? 'U=' + fc(c.v) + (c.v > S.p.qmax + 1e-9 ? ' · sobre qmax' : '') : 'qmax=' + fc(c.v); }
 // una entrada de la leyenda: muestra de línea + texto; tocable si lleva acción
-function leyPMHTML(est, texto, act, id, off, sel) {
+function leyPMHTML(est, texto, act, id, off, sel, crudo) {
   const m = '<svg class="muestra" width="28" height="10" aria-hidden="true">' + muestraSvg(est) + '</svg>';
   if (!act) return '<span class="pm-le fijo">' + m + '<span>' + esc(texto) + '</span></span>';
   return '<button class="pm-le' + (off ? ' off' : '') + (sel ? ' sel' : '') + '" data-act="' + act + '" data-id="' + id + '"' +
-    (act === 'tog' ? ' aria-pressed="' + !off + '"' : '') + '>' + m + '<span>' + esc(texto) + '</span></button>';
+    (act === 'tog' ? ' aria-pressed="' + !off + '"' : '') + '>' + m + '<span>' + (crudo ? texto : esc(texto)) + '</span></button>';
 }
 function renderPM() {
   const cmp = PM.cmp;
@@ -3459,9 +3658,10 @@ function renderPM() {
   const dj = o => (o && isFinite(o.dJ) ? ' (J ' + fdj(o.dJ) + ')' : '');
   const src = cmp ? [cmp.constante, cmp.igualVolumen, cmp.rampa] : [null, null, null];
   const como = comoOpt(PM.opt);
-  let h = leyPMHTML(NEGRO, PM.opt && PM.opt.ok && PM.opt.metodo !== 'disparo' ? 'solución por método directo' : 'extremal' + (como ? ' (por disparo)' : ''), null);
+  let h = leyPMHTML(NEGRO, 'extremal' + (como ? ' (' + como + ')' : ''), null);
   h += leyPMHTML(AZUL, 'sin inyectar, U ≡ 0' + dj(PM.ceroJ), 'tog', 'z', !S.pm.fl[3], false);
   PM_FIJOS.forEach((c, i) => { h += leyPMHTML(c.est, c.nom + dj(src[i]), 'tog', c.id, !S.pm.fl[i], false); });
+  if (S.p.qmax > Q_COTA) h += leyPMHTML(PM_Q, 'q<sub>max</sub> = 0,8' + esc(dj(PM.q08)), 'tog', 'q', !S.pm.fl[4], false, true);
   for (const c of S.pm.ex) {
     const r = PM.ex.get(c.t + '|' + c.v);
     h += leyPMHTML(ESTILOS[c.e], etqPM(c) + (r && isFinite(r.dJ) ? ' (J ' + fdj(r.dJ) + ')' : ''), 'edit', c.id, false, S.pm.edit === c.id);
@@ -3496,6 +3696,7 @@ function agregarPM(t) {
   cambioPM();
 }
 function cambioPM() {
+  if (snap) { snap = null; etiquetaVolver(); }
   renderPM();
   S.hashPend = true;
   pedir();
@@ -3504,6 +3705,7 @@ function fijarPM(v, fin) {
   const c = chipEdPM();
   if (!c || !isFinite(v)) return;
   c.v = +clamp(v, 0.05, rango('qmax').max).toFixed(3);
+  if (snap) { snap = null; etiquetaVolver(); }
   renderPM();
   if (fin) S.arr = false;
   S.hashPend = true;
@@ -3516,7 +3718,7 @@ $('#pm-leyenda').addEventListener('click', e => {
   const act = b.dataset.act;
   if (act === 'add') { agregarPM(id); return; }
   if (act === 'tog') {
-    const i = id === 'z' ? 3 : PM_FIJOS.findIndex(c => c.id === id);
+    const i = id === 'z' ? 3 : id === 'q' ? 4 : PM_FIJOS.findIndex(c => c.id === id);
     S.pm.fl[i] = !S.pm.fl[i];
     cambioPM();
   } else if (act === 'edit') {
@@ -3569,6 +3771,10 @@ function calcularPM() {
       R.ceroJ = o && o.ok ? { o, dJ: o.J / opt.J - 1 } : null;
     } catch (e) { R.ceroJ = null; }
   }
+  if (!R.q08 && p.qmax > Q_COTA) {
+    const o = optConQmax(p, Q_COTA);
+    R.q08 = o && o.ok ? { o, dJ: o.J / opt.J - 1 } : null;
+  }
   if (!R.cmp) {
     if (typeof M.comparaciones !== 'function') R.cmpErr = 'Falta Motor.comparaciones: no hay chips de comparación.';
     else {
@@ -3609,11 +3815,14 @@ function seriesPM(i) {
   const R = PM, o = R.opt;
   if (!o || !o.ok) return [];
   const g = s => i === 0 ? s.U : i === 1 ? s.ell : s.P;
+  const gx = s => i === 3 ? s.ell : s.t;
   const out = [];
-  for (const c of curvasPM()) out.push({ x: c.o.t, y: g(c.o), est: c.est, marker: null });
+  for (const c of curvasPM()) out.push({ x: gx(c.o), y: g(c.o), est: c.est, marker: null });
+  const q8 = R.q08 && R.q08.o;
+  if (S.pm.fl[4] && S.p.qmax > Q_COTA && q8 && q8.t) out.push({ x: gx(q8), y: g(q8), est: PM_Q, marker: null });
   const z = R.ceroJ && R.ceroJ.o;
-  if (S.pm.fl[3] && z && z.t) out.push({ x: z.t, y: g(z), est: AZUL, marker: null });
-  out.push({ x: o.t, y: g(o), est: NEGRO, marker: null });
+  if (S.pm.fl[3] && z && z.t) out.push({ x: gx(z), y: g(z), est: AZUL, marker: null });
+  out.push({ x: gx(o), y: g(o), est: NEGRO, marker: null });
   return out;
 }
 function pintarPM() {
@@ -3635,10 +3844,22 @@ function pintarPM() {
     if (i === 2) rf.hl.push({ eje: true, k: 'P0', txt: 'P', sub: '0', y: S.p.P0 });
     if (i === 0) rf.hl.push({ eje: true, k: 'qmax', txt: 'q', sub: 'max', y: S.p.qmax });
     for (const t of taus) rf.vl.push({ x: t, txt: i === 0 ? 'τ ' + f(t) : '' });
+    if (S.pm.fl[4] && S.p.qmax > Q_COTA && R.q08) {
+      if (i === 0) rf.hl.push({ y: Q_COTA });
+      for (const t of conmTaus(R.q08.o)) rf.vl.push({ x: t, txt: i === 0 ? 'τ ' + f(t) : '' });
+    }
     dimensionar(pmCv[i], pmCaja[i]);
     const s = seriesPM(i);
     const opc = { x0cero: true, y0cero: i !== 1, refy: rf.hl.map(h => h.y) };
     pintar(pmCv[i], { series: s, vista: vistaDe(pmCv[i], cajaAjuste(s, opc)), compacto: true, yv: tit[i], xl: 'τ', xc: true, hl: rf.hl, vl: rf.vl });
+  }
+  {
+    // plano presión–largo: las mismas curvas, sin el tiempo
+    const hl = [{ eje: true, k: 'P0', txt: 'P', sub: '0', y: S.p.P0 }], vl = [{ eje: true, k: 'Ld', txt: 'ℓ', sub: 'd', x: S.p.Ld }];
+    dimensionar(pmCv[3], pmCaja[3]);
+    const s = seriesPM(3);
+    const opc = { x0cero: false, y0cero: true, refy: [S.p.P0], refx: [S.p.Ld] };
+    pintar(pmCv[3], { series: s, vista: vistaDe(pmCv[3], cajaAjuste(s, opc)), compacto: true, yv: 'presión P', xl: 'semilargo ℓ', xc: true, hl, vl });
   }
   const o = R.opt, ok = o && o.ok;
   poner('pm-st-J', ok ? f(o.J) : '—');
@@ -3649,22 +3870,307 @@ function pintarPM() {
   actualizarChipsPM();
 }
 
+// ---------- HJB ----------
+const HJ_N = [41, 81, 161], HJ_NT = [10, 20, 40], MAXHJ = 3;
+const HJ_G = { min: -0.2, max: 0.4, paso: 0.05 }, HJ_E = { min: -50, max: 100, paso: 5 };
+// el lazo cerrado con la ley de HJB va en rojo continuo; el negro sigue siendo del extremal
+// rojo queda para U_c: el feedback de HJB va en verde azulado continuo
+const HJ_LC = { color: '#00908A', dash: [], w: 2.6, cap: 'butt' };
+const HJ_COL = [ESTILOS[0].color, ESTILOS[2].color, ESTILOS[5].color];
+const hjLlena = e => ({ color: HJ_COL[e], dash: [], w: 2.4, cap: 'butt' });
+const hjRayas = e => ({ color: HJ_COL[e], dash: [6, 4], w: 2, cap: 'butt' });
+// rampa del mapa: oscura y saturada, de azul marino a amarillo
+const HJ_RAMPA = [[11, 31, 58], [0, 112, 107], [138, 109, 0], [255, 127, 14]];
+const HJ = { clave: null, sol: null, opt: null, lc: null, ex: new Map(), err: null, img: null };
+const hjCv = [], hjCaja = [];
+(function construirHJ() {
+  const sel = (id, etq, ops) => '<span class="hj-g"><span>' + etq + '</span><span class="selector" id="' + id + '" role="group" aria-label="' + etq + '">' +
+    ops.map(o => '<button data-v="' + o[0] + '" aria-pressed="false">' + o[1] + '</button>').join('') + '</span></span>';
+  $('#sec-hj').insertAdjacentHTML('beforeend',
+    '<div class="panel apil">' +
+    '<div class="aviso" id="hj-aviso" hidden></div>' +
+    '<div class="hj-ctl">' + sel('hj-mapa', 'mapa', [['u', 'u*'], ['V', 'V']]) + sel('hj-n', 'malla', HJ_N.map(n => [n, n + '²'])) + sel('hj-nt', 'pasos en τ', HJ_NT.map(n => [n, n])) + '</div>' +
+    '<div class="lienzo hj-mapa" id="hj-lm"><canvas id="hj-cvm" role="img" aria-label="Mapa en el plano de estado"></canvas></div>' +
+    '<div class="hj-tau"><label for="hj-tau-r">corte en τ = <b id="hj-tau-v">0</b></label><input type="range" id="hj-tau-r" min="0" max="100" step="1"></div>' +
+    lienzosHTML('hj') +
+    '<div class="pm-ley" id="hj-leyenda" role="group" aria-label="Leyenda: toca una curva para mostrarla, ocultarla o editarla"></div>' +
+    editorHTML('hj', '<button class="btn pm-quitar" id="hj-ed-quitar">Quitar perturbación</button>') +
+    '<dl class="stats" id="hj-stats">' +
+    '<div><dt>V(0, x<sub>0</sub>)</dt><dd id="hj-st-V">—</dd></div>' +
+    '<div><dt>J*</dt><dd id="hj-st-J">—</dd></div>' +
+    '<div><dt>V(0, x<sub>0</sub>) − J*</dt><dd id="hj-st-d">—</dd></div>' +
+    '<div><dt>J con el feedback</dt><dd id="hj-st-lc">—</dd></div>' +
+    '<div><dt>u*(0, x<sub>0</sub>)</dt><dd id="hj-st-u">—</dd></div>' +
+    '<div><dt>U*(0)</dt><dd id="hj-st-U0">—</dd></div>' +
+    '</dl></div>');
+  for (let i = 0; i < 3; i++) { hjCv[i] = $('#hj-cv' + i); hjCaja[i] = $('#hj-l' + i); }
+  const TIT_HJ = ['HJB · caudal U', 'HJB · semilargo ℓ', 'HJB · presión P'];
+  const boton = (cont, cv, tit, lineas) => {
+    const b = document.createElement('button');
+    b.className = 'ampl'; b.textContent = '⤢'; b.setAttribute('aria-label', 'Ampliar: ' + tit);
+    b.addEventListener('click', () => ampliar(cont, cv, tit));
+    cont.appendChild(b);
+    if (lineas) { arrastre(cv); gestos(cv); }
+  };
+  for (let i = 0; i < 3; i++) boton(hjCaja[i], hjCv[i], TIT_HJ[i], true);
+  boton($('#hj-lm'), $('#hj-cvm'), 'HJB · mapa en el plano (ℓ, P)', false);
+})();
+function etqHJ(c) { return c.t === 'g' ? 'ΔP ' + sgn(c.v) + ' en τ = ' + fc(S.p.T / 2) : 'η ' + sgn(c.v) + ' %'; }
+function chipEdHJ() { return S.hj.ex.find(c => c.id === S.hj.edit) || null; }
+function renderHJ() {
+  const R = HJ, ok = R.opt && R.opt.ok;
+  const ref = ok ? R.opt.J : R.lc && R.lc.ok ? R.lc.J : NaN;
+  const dj = r => (r && r.ok && isFinite(ref) ? fdj(r.J / ref - 1) : '—');
+  let h = ok ? leyPMHTML(NEGRO, 'extremal (' + comoOpt(R.opt) + ')', null) : '';
+  h += leyPMHTML(HJ_LC, 'feedback de HJB' + (ok && R.lc && R.lc.ok ? ' (J ' + dj(R.lc) + ')' : ''), 'tog', 'c', !S.hj.fl, false);
+  for (const c of S.hj.ex) {
+    const r = R.ex.get(c.t + '|' + c.v);
+    h += leyPMHTML(hjLlena(c.e), etqHJ(c) + (r ? ' (J: feedback ' + dj(r.hj) + (r.ab ? ' · sin corregir ' + dj(r.ab) : '') + ')' : ''), 'edit', c.id, false, S.hj.edit === c.id);
+  }
+  if (S.hj.ex.length && ok) h += leyPMHTML({ color: '#555555', dash: [6, 4], w: 2, cap: 'butt' }, 'rayas: U* del extremal sin corregir', null);
+  if (S.hj.ex.length < MAXHJ) h += '<button class="pm-le pm-mas" data-act="add" data-id="g">＋ empujón ΔP</button><button class="pm-le pm-mas" data-act="add" data-id="e">＋ error en η</button>';
+  const L = $('#hj-leyenda');
+  if (L._h !== h) { L._h = h; L.innerHTML = h; }
+  const marcar = (id, v) => { for (const b of $('#' + id).children) b.setAttribute('aria-pressed', String(b.dataset.v === String(v))); };
+  marcar('hj-mapa', S.hj.mapa); marcar('hj-n', S.hj.n); marcar('hj-nt', S.hj.nt);
+  const rt = $('#hj-tau-r');
+  if (parseFloat(rt.value) !== S.hj.tau) rt.value = S.hj.tau;
+  sincronizarEdHJ();
+}
+function sincronizarEdHJ() {
+  const c = chipEdHJ();
+  const ed = $('#hj-ed');
+  ed.hidden = !c;
+  if (!c) return;
+  const g = c.t === 'g' ? HJ_G : HJ_E;
+  $('#hj-ed-tit').textContent = c.t === 'g' ? 'Empujón a la presión en τ = ' + fc(S.p.T / 2) : 'Error en η de la planta, en %';
+  $('#hj-ed-muestra').innerHTML = muestraSvg(hjLlena(c.e));
+  const rg = $('#hj-ed-rango'), num = $('#hj-ed-num');
+  rg.min = g.min; rg.max = g.max; rg.step = g.paso;
+  if (parseFloat(rg.value) !== c.v) rg.value = c.v;
+  if (document.activeElement !== num) num.value = f(c.v, c.t === 'g' ? 2 : 0).replace(MENOS, '-');
+}
+function cambioHJ() {
+  renderHJ();
+  S.hashPend = true;
+  pedir();
+}
+function agregarHJ(t) {
+  if (S.hj.ex.length >= MAXHJ) return;
+  const usados = S.hj.ex.filter(c => c.t === t).map(c => c.v);
+  const val = (t === 'g' ? [0.2, -0.15, 0.4] : [50, -50, 100]).find(v => !usados.includes(v));
+  const libres = [0, 1, 2].filter(e => !S.hj.ex.some(c => c.e === e));
+  const c = { id: nextId++, t, e: libres[0], v: val === undefined ? (t === 'g' ? 0.1 : 20) : val };
+  S.hj.ex.push(c);
+  S.hj.edit = c.id;
+  cambioHJ();
+}
+function fijarHJ(v, fin) {
+  const c = chipEdHJ();
+  if (!c || !isFinite(v)) return;
+  const g = c.t === 'g' ? HJ_G : HJ_E;
+  c.v = +clamp(v, g.min, g.max).toFixed(3);
+  renderHJ();
+  if (fin) S.arr = false;
+  S.hashPend = true;
+  pedir();
+}
+$('#hj-leyenda').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  const act = b.dataset.act, id = b.dataset.id;
+  if (act === 'add') agregarHJ(id);
+  else if (act === 'tog') { S.hj.fl = !S.hj.fl; cambioHJ(); }
+  else if (act === 'edit') { S.hj.edit = S.hj.edit === +id ? null : +id; cambioHJ(); }
+});
+(function () {
+  $('#hj-ed-quitar').addEventListener('click', () => {
+    const c = chipEdHJ();
+    if (!c) return;
+    S.hj.ex = S.hj.ex.filter(x => x.id !== c.id);
+    S.hj.edit = null;
+    cambioHJ();
+  });
+  const rg = $('#hj-ed-rango'), num = $('#hj-ed-num');
+  rg.addEventListener('input', () => { S.arr = true; fijarHJ(parseFloat(rg.value), false); });
+  rg.addEventListener('change', () => fijarHJ(parseFloat(rg.value), true));
+  const leer = () => { const v = parseFloat(num.value.replace(',', '.').replace(MENOS, '-')); if (isFinite(v)) fijarHJ(v, true); sincronizarEdHJ(); };
+  num.addEventListener('change', leer);
+  num.addEventListener('keydown', e => { if (e.key === 'Enter') { leer(); num.blur(); } });
+  num.addEventListener('focus', () => num.select());
+  const paso = dir => { const c = chipEdHJ(); if (!c) return; const g = c.t === 'g' ? HJ_G : HJ_E; fijarHJ(+(Math.round(c.v / g.paso) * g.paso + dir * g.paso).toFixed(3), true); };
+  $('#hj-ed-menos').addEventListener('click', () => paso(-1));
+  $('#hj-ed-mas').addEventListener('click', () => paso(1));
+  $('#hj-ed-listo').addEventListener('click', () => { S.hj.edit = null; cambioHJ(); });
+  const elegir = (id, fn) => $('#' + id).addEventListener('click', e => { const b = e.target.closest('button'); if (b) { fn(b.dataset.v); cambioHJ(); } });
+  elegir('hj-mapa', v => { S.hj.mapa = v; });
+  elegir('hj-n', v => { S.hj.n = +v; });
+  elegir('hj-nt', v => { S.hj.nt = +v; });
+  // el corte en τ solo repinta el mapa
+  $('#hj-tau-r').addEventListener('input', e => { S.hj.tau = clamp(Math.round(parseFloat(e.target.value)), 0, 100); S.hashPend = true; pedir(); });
+})();
+
+const firmaHJ = () => kt(S.p) + '|' + S.hj.n + '|' + S.hj.nt + '|' + S.hj.ex.map(c => c.t + ':' + c.v).join(',');
+function calcularHJ() {
+  const p = Object.assign({}, S.p), R = HJ;
+  R.err = null;
+  if (typeof M.hjb !== 'function') { R.err = 'Falta Motor.hjb.'; return; }
+  R.opt = hallarOpt(p);
+  // una sola malla en memoria: las de 161² pesan demasiado para la memoria compartida
+  const clave = kt(p) + '|' + S.hj.n + '|' + S.hj.nt;
+  if (R.clave !== clave) {
+    R.sol = M.hjb(p, { n: S.hj.n, nt: S.hj.nt });
+    R.clave = clave;
+    R.lc = M.lazo(p, R.sol);
+    R.ex = new Map();
+    R.img = null;
+  }
+  const ok = R.opt && R.opt.ok;
+  for (const c of S.hj.ex) {
+    const k = c.t + '|' + c.v;
+    if (R.ex.has(k)) continue;
+    const o = c.t === 'g' ? { golpe: { tau: p.T / 2, dP: c.v } } : { planta: Object.assign({}, p, { eta: p.eta * (1 + c.v / 100) }) };
+    R.ex.set(k, { hj: M.lazo(p, R.sol, o), ab: ok ? M.lazo(p, R.opt, o) : null });
+  }
+}
+function curvasHJ() {
+  const R = HJ, out = [];
+  for (const c of S.hj.ex) {
+    const r = R.ex.get(c.t + '|' + c.v);
+    if (!r) continue;
+    if (r.ab && r.ab.ok) out.push({ est: hjRayas(c.e), o: r.ab });
+    if (r.hj && r.hj.ok) out.push({ est: hjLlena(c.e), o: r.hj });
+  }
+  if (S.hj.fl && R.lc && R.lc.ok) out.push({ est: HJ_LC, o: R.lc });
+  if (R.opt && R.opt.ok) out.push({ est: NEGRO, o: R.opt });
+  return out;
+}
+function seriesHJ(i) {
+  return curvasHJ().map(c => ({ x: c.o.t, y: i === 0 ? c.o.U : i === 1 ? c.o.ell : c.o.P, est: c.est, marker: null }));
+}
+function colorHJ(x) {
+  const m = HJ_RAMPA.length - 1, s = clamp(x, 0, 1) * m, i = Math.min(Math.floor(s), m - 1), a = s - i;
+  return [0, 1, 2].map(j => Math.round(HJ_RAMPA[i][j] + a * (HJ_RAMPA[i + 1][j] - HJ_RAMPA[i][j])));
+}
+// el corte del mapa: índice de tiempo de la malla más cercano al deslizador
+function corteHJ() {
+  const sol = HJ.sol;
+  return clamp(Math.round((S.hj.tau / 100) * sol.nt), 0, S.hj.mapa === 'V' ? sol.nt : sol.nt - 1);
+}
+function imagenHJ() {
+  const R = HJ, sol = R.sol, k = corteHJ(), clave = R.clave + '|' + S.hj.mapa + '|' + k;
+  if (R.img && R.img.clave === clave) return R.img;
+  const n = sol.n, A = S.hj.mapa === 'V' ? sol.V[k] : sol.pol[k];
+  let lo = 0, hi = S.p.qmax;
+  if (S.hj.mapa === 'V') { lo = Infinity; hi = -Infinity; for (let q = 0; q < A.length; q++) { if (A[q] < lo) lo = A[q]; if (A[q] > hi) hi = A[q]; } }
+  if (!(hi > lo)) hi = lo + 1;
+  const cv = (R.img && R.img.cv) || document.createElement('canvas');
+  cv.width = n; cv.height = n;
+  const ctx = cv.getContext('2d'), im = ctx.createImageData(n, n);
+  for (let j = 0; j < n; j++)
+    for (let i = 0; i < n; i++) {
+      const c = colorHJ((A[i + n * j] - lo) / (hi - lo)), q = 4 * (i + n * (n - 1 - j));
+      im.data[q] = c[0]; im.data[q + 1] = c[1]; im.data[q + 2] = c[2]; im.data[q + 3] = 255;
+    }
+  ctx.putImageData(im, 0, 0);
+  R.img = { clave, cv, lo, hi };
+  return R.img;
+}
+function pintarMapaHJ() {
+  const R = HJ, sol = R.sol, cv = $('#hj-cvm');
+  dimensionar(cv, $('#hj-lm'));
+  pintar(cv, { series: [], vista: sol ? { x0: sol.l0, x1: sol.l1, y0: 0, y1: sol.P1 } : { x0: 0, x1: 1, y0: 0, y1: 1 }, compacto: true, mt: 30, yv: 'presión P', xl: 'semilargo ℓ', xc: true });
+  const g = cv._geo;
+  if (!sol || !g) return;
+  const k = corteHJ(), tau = k * sol.dt, im = imagenHJ();
+  poner('hj-tau-v', f(tau, 2));
+  const ctx = cv.getContext('2d');
+  const X = x => g.ml + (x - g.v.x0) * g.sx, Y = y => g.mt + (g.v.y1 - y) * g.sy;
+  const pw = g.W - g.ml - g.mr, ph = g.H - g.mt - g.mb;
+  ctx.setTransform(cv._dpr, 0, 0, cv._dpr, 0, 0);
+  ctx.save();
+  ctx.beginPath(); ctx.rect(g.ml, g.mt, pw, ph); ctx.clip();
+  ctx.imageSmoothingEnabled = true;
+  // cada nodo de la malla queda al centro de su celda
+  ctx.drawImage(im.cv, X(sol.l0 - sol.hl / 2), Y(sol.P1 + sol.hP / 2), sol.n * sol.hl * g.sx, sol.n * sol.hP * g.sy);
+  const linea = (o, est, halo) => {
+    ctx.beginPath();
+    for (let i = 0; i < o.t.length; i++) { if (i) ctx.lineTo(X(o.ell[i]), Y(o.P[i])); else ctx.moveTo(X(o.ell[i]), Y(o.P[i])); }
+    ctx.lineJoin = 'round';
+    if (halo) { ctx.setLineDash([]); ctx.strokeStyle = '#fff'; ctx.lineWidth = est.w + 2.6; ctx.stroke(); }
+    ctx.setLineDash(est.dash); ctx.strokeStyle = est.color; ctx.lineWidth = est.w; ctx.stroke();
+  };
+  for (const c of curvasHJ()) linea(c.o, c.est, c.est.dash.length === 0);
+  ctx.setLineDash([]);
+  // dónde va el estado en el instante del corte
+  const ref = R.opt && R.opt.ok ? R.opt : R.lc && R.lc.ok ? R.lc : null;
+  if (ref) {
+    const i = clamp(Math.round((tau / S.p.T) * (ref.t.length - 1)), 0, ref.t.length - 1);
+    ctx.beginPath(); ctx.arc(X(ref.ell[i]), Y(ref.P[i]), 5, 0, 6.2832);
+    ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#111111'; ctx.lineWidth = 2; ctx.stroke();
+  }
+  ctx.restore();
+  // barra de la rampa con sus extremos, en el margen de arriba
+  const bw = Math.min(90, pw * 0.3), bx = g.W - 46 - bw - 26, by = 9;
+  const gr = ctx.createLinearGradient(bx, 0, bx + bw, 0);
+  HJ_RAMPA.forEach((c, i) => gr.addColorStop(i / (HJ_RAMPA.length - 1), 'rgb(' + c.join(',') + ')'));
+  ctx.fillStyle = gr; ctx.fillRect(bx, by, bw, 10);
+  ctx.font = '11px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif';
+  ctx.fillStyle = '#1b1b1a'; ctx.textBaseline = 'alphabetic';
+  ctx.textAlign = 'right'; ctx.fillText(fc(im.lo), bx - 4, by + 9);
+  ctx.textAlign = 'left'; ctx.fillText(fc(im.hi), bx + bw + 4, by + 9);
+  ctx.fillText(S.hj.mapa === 'V' ? 'función valor V' : 'feedback u*', g.ml, by + 9);
+  cv.setAttribute('aria-label', (S.hj.mapa === 'V' ? 'Función valor V' : 'Feedback u*') + ' en el plano semilargo–presión, corte en τ = ' + f(tau, 2));
+}
+function pintarHJ() {
+  const R = HJ;
+  const av = $('#hj-aviso');
+  const dV = R.sol && R.opt && R.opt.ok ? R.sol.V0 / R.opt.J - 1 : 0;
+  const txt = R.err || (R.opt && !R.opt.ok ? 'El extremal no convergió: se muestra solo HJB.' : !isFinite(dV) || Math.abs(dV) > 0.05 ? 'Con estos parámetros la malla queda gruesa: V(0, x₀) difiere de J* en ' + fdj(dV) + '.' : '');
+  av.hidden = !txt;
+  if (av.textContent !== txt) av.textContent = txt;
+  pintarMapaHJ();
+  const tit = ['caudal U', 'semilargo ℓ', 'presión P'];
+  const golpe = S.hj.ex.some(c => c.t === 'g');
+  for (let i = 0; i < 3; i++) {
+    const rf = { hl: [], vl: [{ eje: true, k: 'T', txt: 'T', x: S.p.T }] };
+    if (i === 1) rf.hl.push({ eje: true, k: 'Ld', txt: 'ℓ', sub: 'd', y: S.p.Ld });
+    if (i === 2) rf.hl.push({ eje: true, k: 'P0', txt: 'P', sub: '0', y: S.p.P0 });
+    if (i === 0) rf.hl.push({ eje: true, k: 'qmax', txt: 'q', sub: 'max', y: S.p.qmax });
+    if (golpe) rf.vl.push({ x: S.p.T / 2, txt: i === 0 ? 'empujón' : '' });
+    dimensionar(hjCv[i], hjCaja[i]);
+    const s = seriesHJ(i);
+    const opc = { x0cero: true, y0cero: i !== 1, refy: rf.hl.map(h => h.y) };
+    pintar(hjCv[i], { series: s, vista: vistaDe(hjCv[i], cajaAjuste(s, opc)), compacto: true, yv: tit[i], xl: 'τ', xc: true, hl: rf.hl, vl: rf.vl });
+  }
+  const sol = R.sol, o = R.opt, ok = o && o.ok;
+  poner('hj-st-V', sol ? f(sol.V0) : '—');
+  poner('hj-st-J', ok ? f(o.J) : '—');
+  poner('hj-st-d', sol && ok ? fdj(sol.V0 / o.J - 1) : '—');
+  poner('hj-st-lc', R.lc && R.lc.ok ? f(R.lc.J) : '—');
+  poner('hj-st-u', sol ? f(sol.u0) : '—');
+  poner('hj-st-U0', ok ? f(o.U0) : '—');
+  poner('hj-st-n', sol ? sol.n + '² × ' + sol.nt : '—');
+  poner('hj-st-ms', sol ? f(sol.ms, sol.ms < 10 ? 1 : 0) + ' ms' : '—');
+  renderHJ();
+}
+
 // ---------- LQ y Pontryagin: cuándo se calculan ----------
 // perezoso (solo con la sección cerca de la pantalla) y espaciado mientras se arrastra
 function trabajarSecciones(ahora) {
   let pend = false;
-  for (const nom of ['lq', 'pm']) {
+  for (const nom of ['lq', 'pm', 'hj']) {
     const sc = SECS[nom];
     if (!sc.vis) continue;
-    const firma = nom === 'lq' ? firmaLQ() : firmaPM();
+    const firma = nom === 'lq' ? firmaLQ() : nom === 'hj' ? firmaHJ() : firmaPM();
     if (sc.firma === firma) continue;
     if (S.arr && ahora - sc.ult < sc.costo * 4 + 60) { pend = true; continue; }
     const t0 = performance.now();
-    try { if (nom === 'lq') calcularLQ(); else calcularPM(); }
+    try { if (nom === 'lq') calcularLQ(); else if (nom === 'hj') calcularHJ(); else calcularPM(); }
     catch (e) {
       console.error(e);
       const msg = 'Error del motor: ' + (e && e.message ? e.message : e);
-      if (nom === 'lq') LQ.err = msg; else PM.err = msg;
+      if (nom === 'lq') LQ.err = msg; else if (nom === 'hj') HJ.err = msg; else PM.err = msg;
     }
     sc.costo = Math.max(5, performance.now() - t0);
     sc.ult = performance.now();
@@ -3675,14 +4181,15 @@ function trabajarSecciones(ahora) {
 function pintarSecciones() {
   if (SECS.lq.vis) { try { pintarLQ(); } catch (e) { console.error(e); } }
   if (SECS.pm.vis) { try { pintarPM(); } catch (e) { console.error(e); } }
+  if (SECS.hj.vis) { try { pintarHJ(); } catch (e) { console.error(e); } }
 }
 if ('IntersectionObserver' in window) {
   const io = new IntersectionObserver(es => {
     for (const en of es) SECS[en.target.dataset.sec].vis = en.isIntersecting;
     pedir();
   }, { rootMargin: '500px 0px' });
-  ['lq', 'pm'].forEach(n => { const el = $('#sec-' + n); el.dataset.sec = n; io.observe(el); });
-} else { SECS.lq.vis = true; SECS.pm.vis = true; }
+  ['lq', 'pm', 'hj'].forEach(n => { const el = $('#sec-' + n); el.dataset.sec = n; io.observe(el); });
+} else { SECS.lq.vis = true; SECS.pm.vis = true; SECS.hj.vis = true; }
 
 // ---------- cuadro ----------
 // un solo cuadro pendiente; si el navegador no entrega rAF (pestaña oculta) entra un temporizador
@@ -3755,6 +4262,9 @@ const ro = new ResizeObserver(() => { pedir(); });
 contenedoresL.forEach(c => ro.observe(c));
 MINIS.forEach(m => ro.observe(m.caja));
 for (let i = 0; i < 3; i++) { ro.observe(lqCaja[i]); ro.observe(pmCaja[i]); }
+ro.observe(pmCaja[3]);
+for (let i = 0; i < 3; i++) ro.observe(hjCaja[i]);
+ro.observe($('#hj-lm'));
 ro.observe($('#hoja'));
 window.addEventListener('resize', pedir, { passive: true });
 
@@ -3783,6 +4293,7 @@ $('#btn-reset').addEventListener('click', () => {
 function aplicarEstado(e) {
   S.p = e.p; S.ch = e.ch; S.ax = e.ax; S.ot = e.ot; S.lq = e.lq; S.pm = e.pm;
   cerrarEditor();
+  S.hj = e.hj || defHJ(); renderHJ();
   renderChips(0); renderChips(1); renderLQ(); renderPM();
   aplicarOpt();
   rotularEjes();
@@ -3799,6 +4310,8 @@ window.addEventListener('hashchange', () => {
 (function () {
   const e = leerHash();
   if (e) { S.p = e.p; S.ch = e.ch; S.ax = e.ax; S.ot = e.ot; S.lq = e.lq; S.pm = e.pm; }
+  if (e && e.hj) S.hj = e.hj;
+  renderHJ();
   renderChips(0); renderChips(1); renderLQ(); renderPM();
   aplicarOpt();
   rotularEjes();
