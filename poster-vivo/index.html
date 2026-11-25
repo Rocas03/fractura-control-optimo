@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="build" content="4dd8cdfb9fe5">
+<meta name="build" content="320054ab7044">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
@@ -145,6 +145,7 @@ html.bloq .panel.full{
 .stats div{display:flex;justify-content:space-between;gap:6px;border-bottom:1px solid var(--suave);padding:3px 0}
 .stats dt{color:var(--tinta2)}
 .stats dd{margin:0;font-weight:700}
+@media (max-width:374px){.stats{font-size:13.5px;gap:6px 10px}}
 .fila{border-bottom:1px solid var(--suave);padding:2px 0 0}
 .fila-cab{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px}
 .fila-cab label{font-weight:700}
@@ -2375,7 +2376,7 @@ function pintar(cv, o) {
   for (const t of tx.out) { const x = X(t); if (x >= ml - 1 && x <= W - mr + 1 && !ex.some(r => Math.abs(X(r.x) - x) < 20)) ctx.fillText(fTick(t, tx.dec), x, H - mb + (c ? 13 : 15)); }
   for (const r of ex) rotuloRef(ctx, r, X(r.x), H - mb + (c ? 13 : 15), 'center', tam, ml, W - mr);
   ctx.textAlign = 'right';
-  for (const t of ty.out) { const y = Y(t); if (y >= mt - 1 && y <= H - mb + 1 && !ey.some(r => Math.abs(Y(r.y) - y) < 11)) ctx.fillText(fTick(t, ty.dec), ml - 5, y + 4); }
+  for (const t of ty.out) { const y = Y(t); if (y >= mt - 1 && y <= H - mb + 1 && !ey.some(r => Math.abs(Y(r.y) - y) < 14)) ctx.fillText(fTick(t, ty.dec), ml - 5, y + 4); }
   for (const r of ey) rotuloRef(ctx, r, ml - 5, Y(r.y) + 4, 'right', tam, 0, W);
   ctx.textAlign = 'right';
   if (o.xl && o.xc) {
@@ -2708,6 +2709,7 @@ function ajustarLinea() {
 new ResizeObserver(ajustarLinea).observe($('#formu'));
 // las fuentes de KaTeX llegan después del primer ajuste: se repite al cargarlas
 if (document.fonts) document.fonts.ready.then(() => requestAnimationFrame(ajustarLinea));
+if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', () => requestAnimationFrame(ajustarLinea));
 window.addEventListener('load', () => requestAnimationFrame(ajustarLinea));
 function renderPortada() {
   $('#portada-modelo').innerHTML = '<p><b>Estados:</b> ' + K('\\ell,\\ P') + ', semilargo de la grieta y presión del sistema.</p>' +
